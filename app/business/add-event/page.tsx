@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import AppShell from "@/components/AppShell"
 import { mockVenues, mockMatches } from "@/lib/mock-data"
+import { useToast } from "@/components/Toast"
 import { formatKickoffTime } from "@/lib/utils"
-
-const BIZ_ID = "biz01"
 
 interface FormErrors {
   name?: string
@@ -15,11 +15,29 @@ interface FormErrors {
   date?: string
 }
 
-const inputCls = "w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-orange-500/50 transition-all"
-const selectCls = "w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/50 transition-all"
+type VenueOption = { id: string; name: string; city: string }
+
+const inputCls =
+  "w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-orange-500/50 transition-all"
+const selectCls =
+  "w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/50 transition-all"
+
+const configured = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export default function AddEventPage() {
-  const myVenues = mockVenues.filter((v) => v.businessId === BIZ_ID)
+  const router = useRouter()
+  const { showToast } = useToast()
+
+  const [myVenues, setMyVenues] = useState<VenueOption[]>(() => {
+    if (configured) return []
+    return mockVenues
+      .filter((v) => v.businessId === "biz01")
+      .map((v) => ({ id: v.id, name: v.name, city: v.city }))
+  })
+  const [venuesLoading, setVenuesLoading] = useState(configured)
 
   const [name, setName] = useState("")
   const [venueId, setVenueId] = useState("")
@@ -28,7 +46,57 @@ export default function AddEventPage() {
   const [description, setDescription] = useState("")
   const [deals, setDeals] = useState("")
   const [errors, setErrors] = useState<FormErrors>({})
+  const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  // Load this user's venues from Supabase when configured.
+  useEffect(() => {
+    if (!configured) return
+
+    async function loadVenues() {
+      try {
+        const { createClient } = await import("@/lib/supabase/client")
+        const supabase = createClient()
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (!user) {
+          setVenuesLoading(false)
+          return
+        }
+
+        const { data, error } = await supabase
+          .from("venues")
+          .select("id, name, city_id, cities(name)")
+          .eq("owner_id", user.id)
+          .eq("status", "approved")
+          .order("name")
+
+        if (error || !data) {
+          console.warn("[add-event] venues load error", error)
+          setVenuesLoading(false)
+          return
+        }
+
+        setMyVenues(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (data as any[]).map((v) => ({
+            id: v.id as string,
+            name: v.name as string,
+            city: (v.cities?.name as string | undefined) ?? v.city_id ?? "—",
+          }))
+        )
+      } catch (err) {
+        console.error("[add-event] load venues unexpected error", err)
+      } finally {
+        setVenuesLoading(false)
+      }
+    }
+
+    loadVenues()
+  }, [])
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
@@ -40,10 +108,53 @@ export default function AddEventPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (validate()) {
+    if (!validate()) return
+
+    // ── Demo mode ────────────────────────────────────────────────────────────
+    if (!configured) {
       setSubmitted(true)
+      return
+    }
+
+    // ── Supabase path ─────────────────────────────────────────────────────────
+    setSubmitting(true)
+    try {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        showToast("You must be logged in to add an event.", "error")
+        setSubmitting(false)
+        return
+      }
+
+      const { error: eventError } = await supabase.from("events").insert({
+        venue_id: venueId,
+        match_id: matchId || null,
+        title: name.trim(),
+        description: description.trim() || null,
+        special_offers: deals.trim() || null,
+        event_date: date ? new Date(date).toISOString() : null,
+        status: "pending",
+        featured: false,
+      })
+
+      if (eventError) {
+        console.error("[add-event] insert error", eventError)
+        showToast(eventError.message ?? "Failed to submit event. Please try again.", "error")
+        setSubmitting(false)
+        return
+      }
+
+      showToast("Event submitted for approval!", "success")
+      router.push("/business")
+    } catch (err) {
+      console.error("[add-event] unexpected error", err)
+      showToast("Something went wrong. Please try again.", "error")
+      setSubmitting(false)
     }
   }
 
@@ -53,7 +164,13 @@ export default function AddEventPage() {
         <div className="bg-[#0a0a0f] min-h-screen flex items-center justify-center px-4">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-8 text-center max-w-sm w-full">
             <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                className="w-7 h-7 text-emerald-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -61,17 +178,15 @@ export default function AddEventPage() {
             <p className="text-gray-400 text-sm max-w-xs mx-auto">
               Your event has been submitted and will be reviewed by our team. It will go live within 24 hours.
             </p>
+            <p className="text-yellow-400/70 text-xs mt-3">
+              Demo mode — connect Supabase to persist this submission.
+            </p>
             <div className="flex gap-2 mt-6 justify-center flex-wrap">
               <button
                 onClick={() => {
                   setSubmitted(false)
-                  setName("")
-                  setVenueId("")
-                  setMatchId("")
-                  setDate("")
-                  setDescription("")
-                  setDeals("")
-                  setErrors({})
+                  setName(""); setVenueId(""); setMatchId(""); setDate("")
+                  setDescription(""); setDeals(""); setErrors({})
                 }}
                 className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm"
               >
@@ -113,10 +228,17 @@ export default function AddEventPage() {
           <div className="space-y-3">
             <p className="text-xs font-black uppercase tracking-widest text-gray-500">Venue &amp; Match</p>
             <div>
-              {myVenues.length === 0 ? (
+              {venuesLoading ? (
+                <div className="bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-gray-500 text-sm animate-pulse">
+                  Loading your venues…
+                </div>
+              ) : myVenues.length === 0 ? (
                 <div className="bg-gray-900 border border-dashed border-white/10 rounded-xl p-4 text-center">
-                  <p className="text-gray-400 text-sm">No venues found.</p>
-                  <Link href="/business/add-venue" className="text-orange-400 text-xs hover:underline mt-1 inline-block">
+                  <p className="text-gray-400 text-sm">No approved venues found.</p>
+                  <Link
+                    href="/business/add-venue"
+                    className="text-orange-400 text-xs hover:underline mt-1 inline-block"
+                  >
                     Add a venue first
                   </Link>
                 </div>
@@ -194,9 +316,10 @@ export default function AddEventPage() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-orange-500 hover:bg-orange-400 text-white font-black rounded-xl px-5 py-3.5 transition-all text-base"
+            disabled={submitting || venuesLoading}
+            className="w-full bg-orange-500 hover:bg-orange-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black rounded-xl px-5 py-3.5 transition-all text-base"
           >
-            Submit Event for Approval
+            {submitting ? "Submitting…" : "Submit Event for Approval"}
           </button>
         </form>
       </div>

@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import AppShell from "@/components/AppShell"
 import CitySelector from "@/components/CitySelector"
+import { useToast } from "@/components/Toast"
 import { mockMatches, mockCities } from "@/lib/mock-data"
 import { formatKickoffTime } from "@/lib/utils"
 
@@ -18,9 +20,27 @@ interface FormErrors {
   imageUrl?: string
 }
 
-const inputCls = "w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-orange-500/50 transition-all"
+const inputCls =
+  "w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-orange-500/50 transition-all"
+
+const configured = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
+}
 
 export default function AddVenuePage() {
+  const router = useRouter()
+  const { showToast } = useToast()
+
   const [name, setName] = useState("")
   const [cityId, setCityId] = useState("")
   const [address, setAddress] = useState("")
@@ -35,6 +55,7 @@ export default function AddVenuePage() {
   const [description, setDescription] = useState("")
   const [imageUrl, setImageUrl] = useState("")
   const [errors, setErrors] = useState<FormErrors>({})
+  const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
   const toggleMatch = (matchId: string) => {
@@ -63,29 +84,100 @@ export default function AddVenuePage() {
     return Object.keys(newErrors).length === 0
   }
 
-  function isHttpUrl(value: string): boolean {
-    try {
-      const url = new URL(value)
-      return url.protocol === "http:" || url.protocol === "https:"
-    } catch {
-      return false
-    }
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (validate()) {
+    if (!validate()) return
+
+    // ── Demo mode ─────────────────────────────────────────────────────────
+    if (!configured) {
       setSubmitted(true)
+      return
+    }
+
+    // ── Supabase path ───��──────────────────────────────────────────────────
+    setSubmitting(true)
+    try {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        showToast("You must be logged in to add a venue.", "error")
+        setSubmitting(false)
+        return
+      }
+
+      // Insert the venue row.
+      const { data: venue, error: venueError } = await supabase
+        .from("venues")
+        .insert({
+          owner_id: user.id,
+          name: name.trim(),
+          city_id: cityId || null,
+          address: address.trim(),
+          capacity: Number(capacity),
+          price_type: price,
+          ticket_price: price === "ticketed" ? Number(ticketPrice) : null,
+          booking_url: bookingLink.trim() || null,
+          big_screen: bigScreen,
+          family_friendly: familyFriendly,
+          food_available: foodAvailable,
+          description: description.trim() || null,
+          image_url: imageUrl.trim() || null,
+          status: "pending",
+          featured: false,
+        })
+        .select("id")
+        .single()
+
+      if (venueError || !venue) {
+        console.error("[add-venue] insert error", venueError)
+        showToast(
+          venueError?.message ?? "Failed to submit venue. Please try again.",
+          "error"
+        )
+        setSubmitting(false)
+        return
+      }
+
+      // Insert venue_matches rows (non-fatal if this fails).
+      if (selectedMatchIds.length > 0) {
+        const { error: vmError } = await supabase
+          .from("venue_matches")
+          .insert(
+            selectedMatchIds.map((mid) => ({
+              venue_id: venue.id,
+              match_id: mid,
+            }))
+          )
+        if (vmError) {
+          console.warn("[add-venue] venue_matches insert warning", vmError)
+        }
+      }
+
+      showToast("Venue submitted for approval!", "success")
+      router.push("/business")
+    } catch (err) {
+      console.error("[add-venue] unexpected error", err)
+      showToast("Something went wrong. Please try again.", "error")
+      setSubmitting(false)
     }
   }
 
+  // ── Success state (demo mode only; Supabase path redirects) ─────────────
   if (submitted) {
     return (
       <AppShell title="Add Venue" showBottomNav={false} showBack>
         <div className="bg-[#0a0a0f] min-h-screen flex items-center justify-center px-4">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-8 text-center max-w-sm w-full">
             <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                className="w-7 h-7 text-emerald-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -93,27 +185,21 @@ export default function AddVenuePage() {
             <p className="text-gray-400 text-sm max-w-xs mx-auto">
               Your venue has been submitted. Our team will review it and it will go live within 24 hours.
             </p>
+            <p className="text-yellow-400/70 text-xs mt-3">
+              Demo mode — connect Supabase to persist this submission.
+            </p>
             <div className="flex gap-2 mt-6 justify-center flex-wrap">
               <button
                 onClick={() => {
                   setSubmitted(false)
-                  setName("")
-                  setCityId("")
-                  setAddress("")
-                  setSelectedMatchIds([])
-                  setPrice("free")
-                  setTicketPrice("")
-                  setBookingLink("")
-                  setCapacity("")
-                  setBigScreen(false)
-                  setFamilyFriendly(false)
-                  setFoodAvailable(false)
-                  setDescription("")
-                  setImageUrl("")
+                  setName(""); setCityId(""); setAddress(""); setSelectedMatchIds([])
+                  setPrice("free"); setTicketPrice(""); setBookingLink(""); setCapacity("")
+                  setBigScreen(false); setFamilyFriendly(false); setFoodAvailable(false)
+                  setDescription(""); setImageUrl("")
                 }}
                 className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm"
               >
-                Add Another Venue
+                Add Another
               </button>
               <Link
                 href="/business"
@@ -186,15 +272,25 @@ export default function AddVenuePage() {
                         : "border-white/10 bg-gray-900 hover:border-white/20"
                     }`}
                   >
-                    {/* Custom checkbox */}
-                    <input type="checkbox" checked={checked} onChange={() => toggleMatch(match.id)} className="sr-only" />
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleMatch(match.id)}
+                      className="sr-only"
+                    />
                     <div
                       className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border-2 transition-all ${
                         checked ? "bg-orange-500 border-orange-500" : "border-white/20"
                       }`}
                     >
                       {checked && (
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg
+                          className="w-2.5 h-2.5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -204,7 +300,9 @@ export default function AddVenuePage() {
                       {match.homeTeam.name} vs {match.awayTeam.name}
                     </span>
                     <span className="text-lg">{match.awayTeam.flagEmoji}</span>
-                    <span className="text-gray-500 text-xs">{formatKickoffTime(match.kickoffTime)}</span>
+                    <span className="text-gray-500 text-xs shrink-0">
+                      {formatKickoffTime(match.kickoffTime)}
+                    </span>
                   </label>
                 )
               })}
@@ -231,7 +329,6 @@ export default function AddVenuePage() {
                 </button>
               ))}
             </div>
-
             {price === "ticketed" && (
               <div className="space-y-3 pl-4 border-l-2 border-orange-500/30">
                 <input
@@ -243,7 +340,9 @@ export default function AddVenuePage() {
                   placeholder="Ticket price ($)"
                   className={`${inputCls} ${errors.ticketPrice ? "border-red-500/60" : ""}`}
                 />
-                {errors.ticketPrice && <p className="text-red-400 text-xs mt-1">{errors.ticketPrice}</p>}
+                {errors.ticketPrice && (
+                  <p className="text-red-400 text-xs mt-1">{errors.ticketPrice}</p>
+                )}
                 <input
                   type="url"
                   value={bookingLink}
@@ -251,7 +350,9 @@ export default function AddVenuePage() {
                   placeholder="Booking URL (https://...)"
                   className={`${inputCls} ${errors.bookingLink ? "border-red-500/60" : ""}`}
                 />
-                {errors.bookingLink && <p className="text-red-400 text-xs mt-1">{errors.bookingLink}</p>}
+                {errors.bookingLink && (
+                  <p className="text-red-400 text-xs mt-1">{errors.bookingLink}</p>
+                )}
               </div>
             )}
           </div>
@@ -263,7 +364,7 @@ export default function AddVenuePage() {
               {[
                 { key: "bigScreen", label: "Big Screen", value: bigScreen, set: setBigScreen },
                 { key: "familyFriendly", label: "Family Friendly", value: familyFriendly, set: setFamilyFriendly },
-                { key: "foodAvailable", label: "Food & Drinks", value: foodAvailable, set: setFoodAvailable },
+                { key: "foodAvailable", label: "Food &amp; Drinks", value: foodAvailable, set: setFoodAvailable },
               ].map((feature) => (
                 <button
                   key={feature.key}
@@ -274,9 +375,8 @@ export default function AddVenuePage() {
                       ? "bg-orange-500/15 text-orange-400 border-orange-500/30"
                       : "bg-gray-800 text-gray-400 border-white/10 hover:border-white/20"
                   }`}
-                >
-                  {feature.label}
-                </button>
+                  dangerouslySetInnerHTML={{ __html: feature.label }}
+                />
               ))}
             </div>
           </div>
@@ -305,9 +405,10 @@ export default function AddVenuePage() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-orange-500 hover:bg-orange-400 text-white font-black rounded-xl px-5 py-3.5 transition-all text-base"
+            disabled={submitting}
+            className="w-full bg-orange-500 hover:bg-orange-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black rounded-xl px-5 py-3.5 transition-all text-base"
           >
-            Submit Venue for Approval
+            {submitting ? "Submitting…" : "Submit Venue for Approval"}
           </button>
         </form>
       </div>

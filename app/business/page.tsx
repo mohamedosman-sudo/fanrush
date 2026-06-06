@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import AppShell from "@/components/AppShell"
 import BusinessSidebar from "@/components/BusinessSidebar"
@@ -8,14 +9,154 @@ import { mockVenues, mockEvents } from "@/lib/mock-data"
 import MobileAdminNav from "@/components/MobileAdminNav"
 import { useComingSoon } from "@/components/useComingSoon"
 
-const BIZ_ID = "biz01"
+type DisplayVenue = {
+  id: string
+  name: string
+  city: string
+  address: string
+  status: "pending" | "approved" | "rejected"
+  featured: boolean
+  views: number
+  clicks: number
+  saves: number
+  bookings: number
+}
+
+type DisplayEvent = {
+  id: string
+  name: string
+  description: string
+  date: string
+  status: "pending" | "approved" | "rejected"
+}
+
+const configured = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+function mockFallback(): { venues: DisplayVenue[]; events: DisplayEvent[] } {
+  const BIZ_ID = "biz01"
+  const venues = mockVenues
+    .filter((v) => v.businessId === BIZ_ID)
+    .slice(0, 3)
+    .map((v) => ({
+      id: v.id,
+      name: v.name,
+      city: v.city,
+      address: v.address,
+      status: v.status,
+      featured: v.featured,
+      views: v.views,
+      clicks: v.clicks,
+      saves: v.saves,
+      bookings: v.bookings,
+    }))
+  const venueIds = new Set(venues.map((v) => v.id))
+  const events = mockEvents
+    .filter((e) => venueIds.has(e.venueId))
+    .map((e) => ({
+      id: e.id,
+      name: e.name,
+      description: e.description,
+      date: e.date,
+      status: e.status,
+    }))
+  return { venues, events }
+}
 
 export default function BusinessPage() {
   const showComingSoon = useComingSoon()
-  const myVenues = mockVenues.filter((v) => v.businessId === BIZ_ID).slice(0, 2)
-  const myVenueIds = myVenues.map((v) => v.id)
-  const myEvents = mockEvents.filter((e) => myVenueIds.includes(e.venueId))
-  const primary = myVenues[0]
+
+  const [venues, setVenues] = useState<DisplayVenue[]>(() =>
+    configured ? [] : mockFallback().venues
+  )
+  const [events, setEvents] = useState<DisplayEvent[]>(() =>
+    configured ? [] : mockFallback().events
+  )
+  const [loading, setLoading] = useState(configured)
+  const [usingDemo, setUsingDemo] = useState(!configured)
+
+  useEffect(() => {
+    if (!configured) return
+
+    async function loadData() {
+      try {
+        const { createClient } = await import("@/lib/supabase/client")
+        const supabase = createClient()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          const { venues: v, events: ev } = mockFallback()
+          setVenues(v); setEvents(ev); setUsingDemo(true)
+          setLoading(false)
+          return
+        }
+
+        // Load owned venues.
+        const { data: venueData, error: venueErr } = await supabase
+          .from("venues")
+          .select("id, name, city_id, cities(name), address, status, featured, views, clicks, saves, bookings")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: false })
+
+        if (venueErr || !venueData) {
+          console.warn("[business/page] venues error", venueErr)
+          const { venues: v, events: ev } = mockFallback()
+          setVenues(v); setEvents(ev); setUsingDemo(true)
+          setLoading(false)
+          return
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mappedVenues: DisplayVenue[] = (venueData as any[]).map((v) => ({
+          id: v.id,
+          name: v.name,
+          city: v.cities?.name ?? v.city_id ?? "—",
+          address: v.address ?? "—",
+          status: v.status ?? "pending",
+          featured: v.featured ?? false,
+          views: v.views ?? 0,
+          clicks: v.clicks ?? 0,
+          saves: v.saves ?? 0,
+          bookings: v.bookings ?? 0,
+        }))
+
+        setVenues(mappedVenues)
+
+        // Load events for owned venues.
+        if (mappedVenues.length > 0) {
+          const venueIds = mappedVenues.map((v) => v.id)
+          const { data: eventData, error: eventErr } = await supabase
+            .from("events")
+            .select("id, title, description, event_date, status")
+            .in("venue_id", venueIds)
+            .order("event_date", { ascending: true })
+
+          if (!eventErr && eventData) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setEvents((eventData as any[]).map((e) => ({
+              id: e.id,
+              name: e.title,
+              description: e.description ?? "",
+              date: e.event_date ?? "",
+              status: e.status ?? "pending",
+            })))
+          }
+        }
+      } catch (err) {
+        console.error("[business/page] unexpected error", err)
+        const { venues: v, events: ev } = mockFallback()
+        setVenues(v); setEvents(ev); setUsingDemo(true)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  const primary = venues[0]
 
   return (
     <AppShell title="Business Portal" showBottomNav={false}>
@@ -40,7 +181,7 @@ export default function BusinessPage() {
               <div>
                 <h1 className="text-white font-black text-2xl">Business Portal</h1>
                 <p className="text-gray-400 text-sm mt-1">
-                  Welcome back, {primary?.name ?? "your business"}
+                  Welcome back{primary ? `, ${primary.name}` : ""}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -59,14 +200,16 @@ export default function BusinessPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
-              <p className="text-yellow-300 text-sm font-semibold">
-                Business portal: Supabase authentication and role-based access are enabled. Venue and event writes may still use demo data until the business data layer is fully connected.
-              </p>
-            </div>
+            {usingDemo && (
+              <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
+                <p className="text-yellow-300 text-sm font-semibold">
+                  Demo data — connect Supabase and log in as a business user to see your live venues and events.
+                </p>
+              </div>
+            )}
 
             {/* Analytics Strip */}
-            {primary && (
+            {!loading && primary && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatCard label="Views" value={primary.views.toLocaleString("en-US")} icon="👁️" color="blue" />
                 <StatCard label="Clicks" value={primary.clicks.toLocaleString("en-US")} icon="🖱️" color="green" />
@@ -84,7 +227,13 @@ export default function BusinessPage() {
                 </Link>
               </div>
 
-              {myVenues.length === 0 ? (
+              {loading ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="bg-gray-900 border border-white/10 rounded-2xl p-4 animate-pulse h-28" />
+                  ))}
+                </div>
+              ) : venues.length === 0 ? (
                 <div className="bg-gray-900 border border-dashed border-white/10 rounded-2xl p-8 text-center">
                   <p className="text-gray-400 text-sm mb-3">No venues yet.</p>
                   <Link
@@ -96,7 +245,7 @@ export default function BusinessPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {myVenues.map((venue) => (
+                  {venues.map((venue) => (
                     <div key={venue.id} className="bg-gray-900 border border-white/10 rounded-2xl p-4">
                       {/* Top row */}
                       <div className="flex items-start justify-between gap-3 mb-2">
@@ -168,13 +317,15 @@ export default function BusinessPage() {
                 </Link>
               </div>
 
-              {myEvents.length === 0 ? (
+              {loading ? (
+                <div className="bg-gray-900 border border-white/10 rounded-2xl p-4 animate-pulse h-20" />
+              ) : events.length === 0 ? (
                 <div className="bg-gray-900 border border-dashed border-white/10 rounded-2xl p-8 text-center">
                   <p className="text-gray-400 text-sm">No events yet.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {myEvents.map((event) => (
+                  {events.map((event) => (
                     <div key={event.id} className="bg-gray-900 border border-white/10 rounded-2xl p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -193,16 +344,18 @@ export default function BusinessPage() {
                             </span>
                           </div>
                           <p className="text-gray-400 text-sm">{event.description}</p>
-                          <p className="text-gray-500 text-xs mt-1">
-                            {new Date(event.date).toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              timeZone: "UTC",
-                            })}
-                          </p>
+                          {event.date && (
+                            <p className="text-gray-500 text-xs mt-1">
+                              {new Date(event.date).toLocaleDateString("en-US", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                timeZone: "UTC",
+                              })}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
