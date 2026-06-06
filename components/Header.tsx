@@ -3,10 +3,12 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ReactNode } from "react"
+import AuthNav from "./AuthNav"
 
 interface HeaderProps {
   title?: string
   showBack?: boolean
+  /** Explicit right-side content. When omitted the auth nav is shown instead. */
   rightElement?: ReactNode
 }
 
@@ -44,7 +46,11 @@ export default function Header({ title, showBack, rightElement }: HeaderProps) {
           </Link>
         )}
       </div>
-      {rightElement && <div className="flex items-center">{rightElement}</div>}
+
+      {/* Explicit override takes priority; otherwise show the auth widget */}
+      <div className="flex items-center">
+        {rightElement ?? <AuthNav compact />}
+      </div>
     </header>
   )
 }

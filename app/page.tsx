@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { mockVenues } from "@/lib/mock-data"
 import VenueCard from "@/components/VenueCard"
+import AuthNav from "@/components/AuthNav"
 
 const featuredVenues = mockVenues
   .filter((v) => v.status === "approved" && v.featured)
@@ -38,13 +39,9 @@ export default function LandingPage() {
             ))}
           </nav>
 
-          {/* CTA */}
-          <Link
-            href="/onboarding"
-            className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2 text-sm transition-all active:scale-95"
-          >
-            Get Started
-          </Link>
+          {/* Auth nav — shows Log in / Create Account when logged out,
+               Account / Log out when logged in */}
+          <AuthNav />
         </div>
       </header>
 
