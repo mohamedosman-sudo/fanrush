@@ -48,6 +48,8 @@ export type Venue = {
   clicks: number
   saves: number
   bookings: number
+  description?: string
+  imageUrl?: string
 }
 
 export type Event = {

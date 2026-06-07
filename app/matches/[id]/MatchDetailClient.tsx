@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Match, Venue, Prediction } from "@/lib/types"
+import { Match, Venue, Event, Prediction } from "@/lib/types"
 import MatchDetailHero from "@/components/MatchDetailHero"
 import VenueCard from "@/components/VenueCard"
 import PredictionCard from "@/components/PredictionCard"
@@ -14,6 +14,7 @@ type Tab = "info" | "watch-parties" | "predict" | "share"
 interface MatchDetailClientProps {
   match: Match
   relatedVenues: Venue[]
+  relatedEvents: Event[]
   existingPrediction?: Prediction
 }
 
@@ -27,6 +28,7 @@ const TABS: { id: Tab; label: string }[] = [
 export default function MatchDetailClient({
   match,
   relatedVenues,
+  relatedEvents,
   existingPrediction,
 }: MatchDetailClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>("info")
@@ -122,18 +124,50 @@ export default function MatchDetailClient({
 
         {/* WATCH PARTIES TAB */}
         {activeTab === "watch-parties" && (
-          <div className="space-y-3">
-            {relatedVenues.length === 0 ? (
-              <EmptyState
-                icon="📍"
-                title="No watch parties yet"
-                description="Be the first to list one"
-                action={{ label: "List a venue", href: "/business/add-venue" }}
-              />
-            ) : (
-              relatedVenues.map((venue) => (
-                <VenueCard key={venue.id} venue={venue} />
-              ))
+          <div className="space-y-6">
+            {/* Venues */}
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-gray-500">📍 Venues</p>
+              {relatedVenues.length === 0 ? (
+                <EmptyState
+                  icon="📍"
+                  title="No watch parties yet"
+                  description="Be the first to list one"
+                  action={{ label: "List a venue", href: "/business/add-venue" }}
+                />
+              ) : (
+                relatedVenues.map((venue) => (
+                  <VenueCard key={venue.id} venue={venue} />
+                ))
+              )}
+            </div>
+
+            {/* Events */}
+            {relatedEvents.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-500">🎉 Events</p>
+                {relatedEvents.map((event) => (
+                  <div key={event.id} className="bg-gray-900 border border-white/10 rounded-2xl p-4">
+                    <p className="text-white font-bold">{event.name}</p>
+                    {event.description && (
+                      <p className="text-gray-400 text-sm mt-1">{event.description}</p>
+                    )}
+                    {event.date && (
+                      <p className="text-gray-500 text-xs mt-2">
+                        {new Date(event.date).toLocaleString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "UTC",
+                          timeZoneName: "short",
+                        })}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}

@@ -17,8 +17,11 @@ function rowToEvent(row: Record<string, unknown>): Event {
   }
 }
 
+/** Approved mock events — used when Supabase is not configured (demo mode). */
+const approvedMockEvents = mockEvents.filter((e) => e.status === "approved")
+
 export async function getEvents(): Promise<Event[]> {
-  if (!isSupabaseConfigured()) return mockEvents
+  if (!isSupabaseConfigured()) return approvedMockEvents
 
   try {
     const { createClient } = await import("@/lib/supabase/server")
@@ -26,16 +29,19 @@ export async function getEvents(): Promise<Event[]> {
     const { data, error } = await supabase
       .from("events")
       .select("*")
+      .eq("status", "approved")   // ← only approved events for public views
       .order("event_date")
-    if (error || !data?.length) return mockEvents
+    if (error) return approvedMockEvents          // error → graceful mock fallback
+    if (!data?.length) return []                  // empty → honest empty state
     return data.map((row) => rowToEvent(row as Record<string, unknown>))
   } catch {
-    return mockEvents
+    return approvedMockEvents
   }
 }
 
 export async function getEventsByVenue(venueId: string): Promise<Event[]> {
-  if (!isSupabaseConfigured()) return mockEvents.filter((e) => e.venueId === venueId)
+  if (!isSupabaseConfigured())
+    return approvedMockEvents.filter((e) => e.venueId === venueId)
 
   try {
     const { createClient } = await import("@/lib/supabase/server")
@@ -44,16 +50,19 @@ export async function getEventsByVenue(venueId: string): Promise<Event[]> {
       .from("events")
       .select("*")
       .eq("venue_id", venueId)
+      .eq("status", "approved")   // ← only approved
       .order("event_date")
-    if (error || !data?.length) return mockEvents.filter((e) => e.venueId === venueId)
+    if (error) return approvedMockEvents.filter((e) => e.venueId === venueId)
+    if (!data?.length) return []
     return data.map((row) => rowToEvent(row as Record<string, unknown>))
   } catch {
-    return mockEvents.filter((e) => e.venueId === venueId)
+    return approvedMockEvents.filter((e) => e.venueId === venueId)
   }
 }
 
 export async function getEventsByMatch(matchId: string): Promise<Event[]> {
-  if (!isSupabaseConfigured()) return mockEvents.filter((e) => e.matchId === matchId)
+  if (!isSupabaseConfigured())
+    return approvedMockEvents.filter((e) => e.matchId === matchId)
 
   try {
     const { createClient } = await import("@/lib/supabase/server")
@@ -62,10 +71,12 @@ export async function getEventsByMatch(matchId: string): Promise<Event[]> {
       .from("events")
       .select("*")
       .eq("match_id", matchId)
+      .eq("status", "approved")   // ← only approved
       .order("event_date")
-    if (error || !data?.length) return mockEvents.filter((e) => e.matchId === matchId)
+    if (error) return approvedMockEvents.filter((e) => e.matchId === matchId)
+    if (!data?.length) return []
     return data.map((row) => rowToEvent(row as Record<string, unknown>))
   } catch {
-    return mockEvents.filter((e) => e.matchId === matchId)
+    return approvedMockEvents.filter((e) => e.matchId === matchId)
   }
 }
