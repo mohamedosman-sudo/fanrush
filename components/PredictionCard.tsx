@@ -112,26 +112,28 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
       </div>
 
       {prediction !== undefined && !isEditing ? (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-gray-500 text-xs font-medium tracking-wide">
+            ✓ Your prediction
+          </p>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex-1" />
             <div className="flex items-center gap-3 bg-gray-800 border border-white/10 rounded-2xl px-6 py-3">
               <span className="text-white font-black text-2xl">{prediction.homeScore}</span>
               <span className="text-gray-600 font-bold text-lg">–</span>
               <span className="text-white font-black text-2xl">{prediction.awayScore}</span>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-emerald-400 text-lg">✓</span>
-              <span className="text-gray-400 text-xs">Your prediction</span>
+            <div className="flex-1 flex justify-end">
+              {canEdit && (
+                <button
+                  onClick={startEditing}
+                  className="text-gray-400 hover:text-orange-400 text-xs font-semibold border border-white/10 hover:border-orange-500/30 rounded-xl px-3 py-2 transition-all"
+                >
+                  Edit
+                </button>
+              )}
             </div>
           </div>
-          {canEdit && (
-            <button
-              onClick={startEditing}
-              className="text-gray-400 hover:text-orange-400 text-xs font-semibold border border-white/10 hover:border-orange-500/30 rounded-xl px-3 py-2 transition-all"
-            >
-              Edit
-            </button>
-          )}
         </div>
       ) : (
         <div className="space-y-3">
