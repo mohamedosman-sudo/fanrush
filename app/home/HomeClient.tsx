@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AppShell from "@/components/AppShell"
 import MatchCard from "@/components/MatchCard"
 import VenueCard from "@/components/VenueCard"
@@ -10,6 +10,10 @@ import SponsorBanner from "@/components/SponsorBanner"
 import { mockMatches, mockUsers, mockDeals, mockSponsorSlots, currentUser } from "@/lib/mock-data"
 import { storage, STORAGE_KEYS } from "@/lib/storage"
 import { Venue } from "@/lib/types"
+
+const configured = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 const nextMatch = mockMatches[0]
 const todaysMatches = mockMatches.slice(0, 5)
@@ -38,6 +42,25 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: HomeClientProps) {
+  // "" = logged-out, non-empty string = uid, null = auth not yet resolved
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function checkAuth() {
+      if (!configured) { setUserId("dev"); return }
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id ?? "")
+    }
+    checkAuth()
+  }, [])
+
+  // null = still loading (show cards without actions to avoid flash)
+  // ""   = confirmed logged-out (show login CTA on actions)
+  // str  = confirmed logged-in (show full actions)
+  const isAuthenticated = userId !== null && userId !== ""
+
   const [savedVenuesCount] = useState(() =>
     storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, []).length || currentUser.savedVenues.length
   )
@@ -176,7 +199,14 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
           )}
           <div className="space-y-3">
             {nearbyVenues.length > 0 ? (
-              nearbyVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)
+              nearbyVenues.map((venue) => (
+                <VenueCard
+                  key={venue.id}
+                  venue={venue}
+                  isAuthenticated={isAuthenticated}
+                  loginReturnPath="/home"
+                />
+              ))
             ) : (
               <p className="text-gray-500 text-sm">No approved venues yet — check back soon.</p>
             )}
@@ -209,7 +239,14 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
               <p className="text-yellow-400/70 text-xs mb-2">Sample venues — connect Supabase for live listings.</p>
             )}
             <div className="space-y-3">
-              {featuredVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}
+              {featuredVenues.map((venue) => (
+                <VenueCard
+                  key={venue.id}
+                  venue={venue}
+                  isAuthenticated={isAuthenticated}
+                  loginReturnPath="/home"
+                />
+              ))}
             </div>
           </section>
         )}

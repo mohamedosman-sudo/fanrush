@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Match, Venue, Event, Prediction } from "@/lib/types"
 import MatchDetailHero from "@/components/MatchDetailHero"
@@ -38,19 +39,33 @@ export default function MatchDetailClient({
   const [activeTab, setActiveTab] = useState<Tab>("info")
   const [prediction, setPrediction] = useState<Prediction | undefined>(existingPrediction)
   const [copied, setCopied] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
   const showComingSoon = useComingSoon()
 
+  // "" = logged out, non-empty string = userId, null = not yet resolved
+  const [userId, setUserId] = useState<string | null>(null)
+  // authLoading starts true when Supabase is configured so we can show a
+  // spinner instead of flashing a logged-out state briefly.
+  const [authLoading, setAuthLoading] = useState(configured)
+
   useEffect(() => {
-    if (!configured) return
     async function getUser() {
+      if (!configured) {
+        // Dev / demo mode — treat as logged in so mock data is usable.
+        setUserId("dev")
+        setAuthLoading(false)
+        return
+      }
       const { createClient } = await import("@/lib/supabase/client")
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      setUserId(user?.id ?? null)
+      // Use "" for logged-out so we can distinguish from null (loading).
+      setUserId(user?.id ?? "")
+      setAuthLoading(false)
     }
     getUser()
   }, [])
+
+  const isAuthenticated = !authLoading && !!userId
 
   const shareText = `Watch ${match.homeTeam.name} ${match.homeTeam.flagEmoji} vs ${match.awayTeam.flagEmoji} ${match.awayTeam.name} — ${formatKickoffTime(match.kickoffTime)} at ${match.stadium}, ${match.city}. Find watch parties near you on FanRush!`
   const shareUrl =
@@ -88,6 +103,9 @@ export default function MatchDetailClient({
     }
   }
 
+  // next= param pointing back to this specific match page
+  const matchLoginHref = `/login?next=${encodeURIComponent(`/matches/${match.id}`)}`
+
   return (
     <div>
       {/* 1. HERO */}
@@ -115,7 +133,7 @@ export default function MatchDetailClient({
       {/* 3. TAB CONTENT */}
       <div className="px-4 py-5 max-w-2xl mx-auto space-y-4">
 
-        {/* INFO TAB */}
+        {/* ── INFO TAB — always public ── */}
         {activeTab === "info" && (
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -147,61 +165,116 @@ export default function MatchDetailClient({
           </div>
         )}
 
-        {/* WATCH PARTIES TAB */}
+        {/* ── WATCH PARTIES TAB — auth-gated ── */}
         {activeTab === "watch-parties" && (
           <div className="space-y-6">
-            {/* Venues */}
-            <div className="space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-500">📍 Venues</p>
-              {relatedVenues.length === 0 ? (
-                <EmptyState
-                  icon="📍"
-                  title="No watch parties yet"
-                  description="Be the first to list one"
-                  action={{ label: "List a venue", href: "/business/add-venue" }}
-                />
-              ) : (
-                relatedVenues.map((venue) => (
-                  <VenueCard key={venue.id} venue={venue} />
-                ))
-              )}
-            </div>
-
-            {/* Events */}
-            {relatedEvents.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-xs font-black uppercase tracking-widest text-gray-500">🎉 Events</p>
-                {relatedEvents.map((event) => (
-                  <div key={event.id} className="bg-gray-900 border border-white/10 rounded-2xl p-4">
-                    <p className="text-white font-bold">{event.name}</p>
-                    {event.description && (
-                      <p className="text-gray-400 text-sm mt-1">{event.description}</p>
-                    )}
-                    {event.date && (
-                      <p className="text-gray-500 text-xs mt-2">
-                        {new Date(event.date).toLocaleString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          timeZone: "UTC",
-                          timeZoneName: "short",
-                        })}
-                      </p>
-                    )}
+            {authLoading ? (
+              /* Auth resolving — show spinner to avoid flashing logged-out state */
+              <div className="flex justify-center py-12">
+                <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              /* Logged-out gate */
+              <div className="space-y-4">
+                {/* Blurred preview cards (pointer-events disabled) */}
+                {relatedVenues.slice(0, 2).map((venue) => (
+                  <div
+                    key={venue.id}
+                    className="rounded-2xl overflow-hidden blur-sm opacity-40 pointer-events-none select-none"
+                    aria-hidden="true"
+                  >
+                    <VenueCard venue={venue} isAuthenticated={false} />
                   </div>
                 ))}
+
+                {/* CTA card */}
+                <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-orange-500/15 flex items-center justify-center mx-auto">
+                    <span className="text-2xl">📍</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-base">
+                      Log in to see watch parties for this match
+                    </p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Discover venues, save your favourites, and book your spot.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      href={matchLoginHref}
+                      className="w-full min-h-[44px] flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
+                    >
+                      Log In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="w-full min-h-[44px] flex items-center justify-center rounded-xl border border-white/15 hover:border-white/30 text-gray-300 hover:text-white font-semibold text-sm transition-all active:scale-95"
+                    >
+                      Create Account — it&apos;s free
+                    </Link>
+                  </div>
+                </div>
               </div>
+            ) : (
+              /* Authenticated — full venue list */
+              <>
+                <div className="space-y-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-gray-500">📍 Venues</p>
+                  {relatedVenues.length === 0 ? (
+                    <EmptyState
+                      icon="📍"
+                      title="No watch parties yet"
+                      description="Be the first to list one"
+                      action={{ label: "List a venue", href: "/business/add-venue" }}
+                    />
+                  ) : (
+                    relatedVenues.map((venue) => (
+                      <VenueCard
+                        key={venue.id}
+                        venue={venue}
+                        isAuthenticated={true}
+                        loginReturnPath={`/matches/${match.id}`}
+                      />
+                    ))
+                  )}
+                </div>
+
+                {relatedEvents.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-black uppercase tracking-widest text-gray-500">🎉 Events</p>
+                    {relatedEvents.map((event) => (
+                      <div key={event.id} className="bg-gray-900 border border-white/10 rounded-2xl p-4">
+                        <p className="text-white font-bold">{event.name}</p>
+                        {event.description && (
+                          <p className="text-gray-400 text-sm mt-1">{event.description}</p>
+                        )}
+                        {event.date && (
+                          <p className="text-gray-500 text-xs mt-2">
+                            {new Date(event.date).toLocaleString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              timeZone: "UTC",
+                              timeZoneName: "short",
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
 
-        {/* PREDICT TAB */}
+        {/* ── PREDICT TAB — auth-gated via PredictionCard ── */}
         {activeTab === "predict" && (
           <div className="space-y-4">
-            {/* Points guide */}
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
               <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full px-3 py-1 text-xs font-bold">
                 ✅ Exact score = 5pts
               </span>
@@ -217,22 +290,20 @@ export default function MatchDetailClient({
               prediction={prediction}
               onPredict={handlePredict}
               disabled={match.status !== "upcoming"}
-              isAuthenticated={!!userId}
+              isAuthenticated={isAuthenticated}
             />
           </div>
         )}
 
-        {/* SHARE TAB */}
+        {/* ── SHARE TAB — always public ── */}
         {activeTab === "share" && (
           <div className="space-y-4">
-            {/* Share text box */}
             <div className="bg-gray-900 border border-white/10 rounded-2xl p-4">
               <p className="font-mono text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {shareText}
               </p>
             </div>
 
-            {/* Copy button */}
             <button
               onClick={handleCopy}
               className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-colors"
@@ -240,7 +311,6 @@ export default function MatchDetailClient({
               {copied ? "✅ Copied!" : "📋 Copy Text & Link"}
             </button>
 
-            {/* Social share buttons */}
             <div className="flex gap-3">
               <a
                 href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`}
@@ -271,7 +341,6 @@ export default function MatchDetailClient({
               </a>
             </div>
 
-            {/* Add reminder */}
             <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
               <div>
                 <p className="text-white font-semibold text-sm">Set a reminder</p>

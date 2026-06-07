@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { Venue } from "@/lib/types"
 import { storage, STORAGE_KEYS } from "@/lib/storage"
@@ -7,14 +8,34 @@ import { storage, STORAGE_KEYS } from "@/lib/storage"
 interface VenueCardProps {
   venue: Venue
   onSave?: (venueId: string) => void
+  /**
+   * Pass false when the current visitor is not authenticated.
+   * Save and Book Now actions are replaced with login CTAs.
+   * Defaults to true so existing callers inside authenticated pages
+   * (profile, admin) need no changes.
+   */
+  isAuthenticated?: boolean
+  /**
+   * The path to return to after login. Used in the ?next= param.
+   * Defaults to /watch-parties.
+   */
+  loginReturnPath?: string
 }
 
-export default function VenueCard({ venue, onSave }: VenueCardProps) {
+export default function VenueCard({
+  venue,
+  onSave,
+  isAuthenticated = true,
+  loginReturnPath = "/watch-parties",
+}: VenueCardProps) {
   const [isSaved, setIsSaved] = useState<boolean>(() =>
-    storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, []).includes(venue.id)
+    isAuthenticated
+      ? storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, []).includes(venue.id)
+      : false
   )
 
   function handleSave() {
+    if (!isAuthenticated) return
     const saved = storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, [])
     const updated = isSaved
       ? saved.filter((id) => id !== venue.id)
@@ -24,6 +45,8 @@ export default function VenueCard({ venue, onSave }: VenueCardProps) {
     onSave?.(venue.id)
   }
 
+  const loginHref = `/login?next=${encodeURIComponent(loginReturnPath)}`
+
   return (
     <div className="bg-gray-900 border border-white/10 rounded-2xl overflow-hidden">
       {/* Orange accent line for featured venues */}
@@ -32,16 +55,15 @@ export default function VenueCard({ venue, onSave }: VenueCardProps) {
       )}
 
       <div className="p-4 space-y-3">
-        {/* Row 1: name / city + price / capacity */}
+        {/* Row 1: name / city + price / capacity — no absolute positioning */}
         <div className="flex items-start gap-3">
-          {/* Left: name + address */}
           <div className="flex-1 min-w-0">
             <h3 className="text-white font-bold text-base leading-snug">{venue.name}</h3>
             <p className="text-gray-400 text-sm mt-0.5 truncate">{venue.city}</p>
             <p className="text-gray-500 text-xs mt-0.5 truncate">{venue.address}</p>
           </div>
 
-          {/* Right: price badge + capacity — stacked, never overlaps */}
+          {/* Price + capacity stacked right — whitespace-nowrap prevents overlap */}
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
             <span
               className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
@@ -58,7 +80,7 @@ export default function VenueCard({ venue, onSave }: VenueCardProps) {
           </div>
         </div>
 
-        {/* Row 2: amenity + Featured badges */}
+        {/* Row 2: amenity + Featured badges — flex-wrap so they never overflow */}
         <div className="flex flex-wrap gap-2">
           {venue.featured && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-500/15 border border-orange-500/25 text-orange-400 text-xs font-bold">
@@ -82,31 +104,41 @@ export default function VenueCard({ venue, onSave }: VenueCardProps) {
           )}
         </div>
 
-        {/* Row 3: Save / Book actions */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSave}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all min-h-[40px] ${
-              isSaved
-                ? "border-orange-500/60 text-orange-400"
-                : "border-white/20 hover:border-orange-500/50 text-gray-300 hover:text-orange-400"
-            }`}
-          >
-            🔖 {isSaved ? "Saved" : "Save"}
-          </button>
-          {venue.bookingLink ? (
-            <a
-              href={venue.bookingLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 text-center px-3 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95 min-h-[40px] flex items-center justify-center"
+        {/* Row 3: actions — authenticated vs. logged-out variants */}
+        {isAuthenticated ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSave}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all min-h-[40px] ${
+                isSaved
+                  ? "border-orange-500/60 text-orange-400"
+                  : "border-white/20 hover:border-orange-500/50 text-gray-300 hover:text-orange-400"
+              }`}
             >
-              Book Now
-            </a>
-          ) : (
-            <span className="text-gray-600 text-xs">Booking link coming soon</span>
-          )}
-        </div>
+              🔖 {isSaved ? "Saved" : "Save"}
+            </button>
+            {venue.bookingLink ? (
+              <a
+                href={venue.bookingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-center px-3 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95 min-h-[40px] flex items-center justify-center"
+              >
+                Book Now
+              </a>
+            ) : (
+              <span className="text-gray-600 text-xs">Booking link coming soon</span>
+            )}
+          </div>
+        ) : (
+          /* Logged-out: replace actionable buttons with a single login CTA */
+          <Link
+            href={loginHref}
+            className="flex items-center justify-center gap-2 w-full min-h-[40px] px-3 py-2 rounded-xl border border-orange-500/40 text-orange-400 hover:border-orange-500 text-sm font-semibold transition-all active:scale-95"
+          >
+            🔒 Log in to save &amp; book
+          </Link>
+        )}
       </div>
     </div>
   )
