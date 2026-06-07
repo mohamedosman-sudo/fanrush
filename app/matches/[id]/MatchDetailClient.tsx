@@ -174,16 +174,35 @@ export default function MatchDetailClient({
                 <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : !isAuthenticated ? (
-              /* Logged-out gate */
+              /*
+               * Logged-out gate — NO real venue data in the DOM.
+               * Skeleton cards are purely visual grey boxes; they carry
+               * zero real venue name / address / capacity / badge data.
+               */
               <div className="space-y-4">
-                {/* Blurred preview cards (pointer-events disabled) */}
-                {relatedVenues.slice(0, 2).map((venue) => (
+                {/* Skeleton placeholder cards (no real data) */}
+                {[0, 1].map((i) => (
                   <div
-                    key={venue.id}
-                    className="rounded-2xl overflow-hidden blur-sm opacity-40 pointer-events-none select-none"
+                    key={i}
+                    className="bg-gray-900 border border-white/5 rounded-2xl p-4 space-y-3 blur-sm opacity-50 pointer-events-none select-none animate-pulse"
                     aria-hidden="true"
                   >
-                    <VenueCard venue={venue} isAuthenticated={false} />
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-800 rounded w-3/4" />
+                        <div className="h-3 bg-gray-800 rounded w-1/2" />
+                        <div className="h-3 bg-gray-800 rounded w-2/3" />
+                      </div>
+                      <div className="flex flex-col gap-2 items-end">
+                        <div className="h-5 w-14 bg-gray-800 rounded-full" />
+                        <div className="h-3 w-16 bg-gray-800 rounded" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-6 w-20 bg-gray-800 rounded-full" />
+                      <div className="h-6 w-16 bg-gray-800 rounded-full" />
+                    </div>
+                    <div className="h-9 bg-gray-800 rounded-xl" />
                   </div>
                 ))}
 
@@ -197,7 +216,7 @@ export default function MatchDetailClient({
                       Log in to see watch parties for this match
                     </p>
                     <p className="text-gray-400 text-sm mt-1">
-                      Discover venues, save your favourites, and book your spot.
+                      Find venues, save favourites and book your spot.
                     </p>
                   </div>
                   <div className="flex flex-col gap-3">

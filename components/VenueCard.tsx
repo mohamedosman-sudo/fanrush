@@ -9,10 +9,9 @@ interface VenueCardProps {
   venue: Venue
   onSave?: (venueId: string) => void
   /**
-   * Pass false when the current visitor is not authenticated.
-   * Save and Book Now actions are replaced with login CTAs.
-   * Defaults to true so existing callers inside authenticated pages
-   * (profile, admin) need no changes.
+   * Must be explicitly set to true for authenticated callers.
+   * Defaults to FALSE so an accidental omission never exposes venue
+   * actions (Save / Book Now) to logged-out users.
    */
   isAuthenticated?: boolean
   /**
@@ -25,7 +24,7 @@ interface VenueCardProps {
 export default function VenueCard({
   venue,
   onSave,
-  isAuthenticated = true,
+  isAuthenticated = false,
   loginReturnPath = "/watch-parties",
 }: VenueCardProps) {
   const [isSaved, setIsSaved] = useState<boolean>(() =>

@@ -387,7 +387,7 @@ export default function ProfilePage() {
                       action={{ label: "Find Venues", href: "/watch-parties" }}
                     />
                   ) : (
-                    savedVenues.map((v) => <VenueCard key={v.id} venue={v} />)
+                    savedVenues.map((v) => <VenueCard key={v.id} venue={v} isAuthenticated={true} />)
                   )}
                 </div>
               )}

@@ -56,10 +56,11 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
     checkAuth()
   }, [])
 
-  // null = still loading (show cards without actions to avoid flash)
-  // ""   = confirmed logged-out (show login CTA on actions)
-  // str  = confirmed logged-in (show full actions)
-  const isAuthenticated = userId !== null && userId !== ""
+  // null  = auth not yet resolved   → show skeleton venue cards
+  // ""    = confirmed logged-out   → show locked CTA, no venue data
+  // str   = confirmed logged-in    → show real venue cards with actions
+  const authResolved = userId !== null
+  const isAuthenticated = authResolved && userId !== ""
 
   const [savedVenuesCount] = useState(() =>
     storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, []).length || currentUser.savedVenues.length
@@ -192,25 +193,68 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-white font-bold text-lg">Watch Parties Near You</h2>
-            <Link href="/watch-parties" className="text-orange-400 text-sm hover:text-orange-300">See all →</Link>
-          </div>
-          {usingDemo && (
-            <p className="text-yellow-400/70 text-xs mb-2">Sample venues — connect Supabase for live listings.</p>
-          )}
-          <div className="space-y-3">
-            {nearbyVenues.length > 0 ? (
-              nearbyVenues.map((venue) => (
-                <VenueCard
-                  key={venue.id}
-                  venue={venue}
-                  isAuthenticated={isAuthenticated}
-                  loginReturnPath="/home"
-                />
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">No approved venues yet — check back soon.</p>
+            {isAuthenticated && (
+              <Link href="/watch-parties" className="text-orange-400 text-sm hover:text-orange-300">See all →</Link>
             )}
           </div>
+
+          {/* Loading: skeleton cards — no real venue data */}
+          {!authResolved && (
+            <div className="space-y-3">
+              {[0, 1].map((i) => (
+                <div key={i} className="bg-gray-900 border border-white/5 rounded-2xl p-4 space-y-3 animate-pulse">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-800 rounded w-3/4" />
+                      <div className="h-3 bg-gray-800 rounded w-1/2" />
+                    </div>
+                    <div className="h-5 w-14 bg-gray-800 rounded-full flex-shrink-0" />
+                  </div>
+                  <div className="h-9 bg-gray-800 rounded-xl" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Logged-out: locked CTA — no real venue data in DOM */}
+          {authResolved && !isAuthenticated && (
+            <div className="bg-gray-900 border border-white/10 rounded-2xl p-5 flex items-center gap-4">
+              <span className="text-2xl flex-shrink-0">🔒</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm">Log in to find watch parties near you</p>
+                <p className="text-gray-500 text-xs mt-0.5">Discover venues, save favourites and book your spot.</p>
+              </div>
+              <Link
+                href="/login?next=/watch-parties"
+                className="flex-shrink-0 min-h-[40px] flex items-center px-4 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
+              >
+                Log In
+              </Link>
+            </div>
+          )}
+
+          {/* Authenticated: real venue cards */}
+          {isAuthenticated && (
+            <>
+              {usingDemo && (
+                <p className="text-yellow-400/70 text-xs mb-2">Sample venues — connect Supabase for live listings.</p>
+              )}
+              <div className="space-y-3">
+                {nearbyVenues.length > 0 ? (
+                  nearbyVenues.map((venue) => (
+                    <VenueCard
+                      key={venue.id}
+                      venue={venue}
+                      isAuthenticated={true}
+                      loginReturnPath="/home"
+                    />
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">No approved venues yet — check back soon.</p>
+                )}
+              </div>
+            </>
+          )}
         </section>
 
         {/* 5. PREDICTION LEADERBOARD */}
@@ -228,8 +272,8 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
           </div>
         </section>
 
-        {/* 6. FEATURED VENUES */}
-        {featuredVenues.length > 0 && (
+        {/* 6. FEATURED VENUES — only shown to authenticated users */}
+        {isAuthenticated && featuredVenues.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-white font-bold text-lg">Featured Fan Zones</h2>
@@ -243,7 +287,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
                 <VenueCard
                   key={venue.id}
                   venue={venue}
-                  isAuthenticated={isAuthenticated}
+                  isAuthenticated={true}
                   loginReturnPath="/home"
                 />
               ))}

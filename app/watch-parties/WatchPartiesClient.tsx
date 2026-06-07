@@ -118,7 +118,7 @@ export default function WatchPartiesClient({ venues, usingDemo }: Props) {
   ] as const
 
   // Preview venues shown to logged-out users (first 2, blurred)
-  const previewVenues = venues.slice(0, 2)
+  // previewVenues removed — logged-out gate uses skeleton cards (no real data)
 
   // ── Shared page header ───────────────────────────────────────────────
   const pageHeader = (
@@ -153,30 +153,43 @@ export default function WatchPartiesClient({ venues, usingDemo }: Props) {
       <div className="max-w-2xl mx-auto">
         {pageHeader}
 
-        {/* Preview cards — blurred to signal locked content */}
-        {previewVenues.length > 0 && (
-          <div className="px-4 space-y-4 mt-2 relative">
-            <div className="pointer-events-none select-none" aria-hidden="true">
-              {previewVenues.map((venue) => (
-                <div key={venue.id} className="mb-4 rounded-2xl overflow-hidden">
-                  <div className="blur-sm opacity-50">
-                    <VenueCard venue={venue} />
-                  </div>
+        {/* Skeleton preview — purely visual, zero real venue data in the DOM */}
+        <div className="px-4 space-y-3 mt-2 relative">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="bg-gray-900 border border-white/5 rounded-2xl p-4 space-y-3 blur-sm opacity-50 pointer-events-none select-none animate-pulse"
+              aria-hidden="true"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-800 rounded w-3/4" />
+                  <div className="h-3 bg-gray-800 rounded w-1/2" />
+                  <div className="h-3 bg-gray-800 rounded w-2/3" />
                 </div>
-              ))}
-            </div>
-
-            {/* Lock overlay centred over the preview cards */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <div className="bg-[#0a0a0f]/70 rounded-2xl px-6 py-4 text-center">
-                <span className="text-3xl">🔒</span>
-                <p className="text-white font-bold text-sm mt-2">
-                  {venues.length} venues available
-                </p>
+                <div className="flex flex-col gap-2 items-end">
+                  <div className="h-5 w-14 bg-gray-800 rounded-full" />
+                  <div className="h-3 w-16 bg-gray-800 rounded" />
+                </div>
               </div>
+              <div className="flex gap-2">
+                <div className="h-6 w-20 bg-gray-800 rounded-full" />
+                <div className="h-6 w-16 bg-gray-800 rounded-full" />
+              </div>
+              <div className="h-9 bg-gray-800 rounded-xl" />
+            </div>
+          ))}
+
+          {/* Lock overlay centred over skeleton cards */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <div className="bg-[#0a0a0f]/75 rounded-2xl px-6 py-4 text-center">
+              <span className="text-3xl">🔒</span>
+              <p className="text-white font-bold text-sm mt-2">
+                {venues.length > 0 ? `${venues.length} venues available` : "Venues available"}
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
         {/* CTA card */}
         <div className="mx-4 mt-6 bg-gray-900 border border-white/10 rounded-2xl p-6 text-center space-y-4">
@@ -273,7 +286,9 @@ export default function WatchPartiesClient({ venues, usingDemo }: Props) {
             }
           />
         ) : (
-          filteredVenues.map((venue) => <VenueCard key={venue.id} venue={venue} />)
+          filteredVenues.map((venue) => (
+            <VenueCard key={venue.id} venue={venue} isAuthenticated={true} />
+          ))
         )}
       </div>
 
