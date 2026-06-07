@@ -51,6 +51,8 @@ function buildUser(opts: {
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("overview")
   const [savedSubTab, setSavedSubTab] = useState<SavedSubTab>("matches")
+  const [tournamentPicks, setTournamentPicks] = useState<{ winner: string; topScorer: string; mvp: string } | null>(null)
+
   const [user, setUser] = useState<User>(() => {
     // Start with the mock user; override with real data once loaded
     const savedVenues = storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, currentUser.savedVenues)
@@ -88,8 +90,8 @@ export default function ProfilePage() {
         return
       }
 
-      // Load profile + predictions in parallel
-      const [profileRes, predsRes] = await Promise.all([
+      // Load profile, predictions, and tournament picks in parallel
+      const [profileRes, predsRes, picksRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("display_name, points")
@@ -100,10 +102,23 @@ export default function ProfilePage() {
           .select("*")
           .eq("user_id", authUser.id)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("tournament_picks")
+          .select("winner, top_scorer, mvp")
+          .eq("user_id", authUser.id)
+          .single(),
       ])
 
       const profile = profileRes.data as { display_name: string | null; points: number | null } | null
       const predsData = predsRes.data ?? []
+
+      if (picksRes.data) {
+        setTournamentPicks({
+          winner: (picksRes.data.winner as string | null) ?? "",
+          topScorer: (picksRes.data.top_scorer as string | null) ?? "",
+          mvp: (picksRes.data.mvp as string | null) ?? "",
+        })
+      }
 
       const realPredictions: Prediction[] = predsData.map((row) => ({
         id: row.id as string,
@@ -239,6 +254,35 @@ export default function ProfilePage() {
                   <p className="text-white font-semibold text-sm">📍 {userCity}</p>
                 </div>
               </div>
+
+              {/* Tournament Picks */}
+              {tournamentPicks && (tournamentPicks.winner || tournamentPicks.topScorer || tournamentPicks.mvp) && (
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2">
+                    🏆 Tournament Picks
+                  </p>
+                  <div className="bg-gray-900 border border-white/10 rounded-xl p-3 space-y-2">
+                    {tournamentPicks.winner && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-gray-400 text-xs">World Cup Winner</span>
+                        <span className="text-white font-bold text-sm">{tournamentPicks.winner}</span>
+                      </div>
+                    )}
+                    {tournamentPicks.topScorer && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-gray-400 text-xs">Top Scorer</span>
+                        <span className="text-white font-bold text-sm">{tournamentPicks.topScorer}</span>
+                      </div>
+                    )}
+                    {tournamentPicks.mvp && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-gray-400 text-xs">Tournament MVP</span>
+                        <span className="text-white font-bold text-sm">{tournamentPicks.mvp}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

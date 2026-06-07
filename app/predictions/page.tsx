@@ -6,7 +6,9 @@ import AppShell from "@/components/AppShell"
 import PredictionCard from "@/components/PredictionCard"
 import Leaderboard from "@/components/Leaderboard"
 import SponsorBanner from "@/components/SponsorBanner"
-import { mockMatches, mockUsers, mockLeagues, mockSponsorSlots } from "@/lib/mock-data"
+import { mockMatches, mockUsers, mockSponsorSlots } from "@/lib/mock-data"
+import MiniLeagues from "@/components/MiniLeagues"
+import TournamentPicksSection from "@/components/TournamentPicksSection"
 import { Prediction } from "@/lib/types"
 import { useToast } from "@/components/Toast"
 
@@ -14,12 +16,9 @@ const configured = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-type Tab = "predictions" | "leaderboard" | "minileagues"
+type Tab = "predictions" | "leaderboard" | "leagues"
 type LeaderboardEntry = { name: string; points: number; avatar?: string; rank: number }
 
-function generateCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase()
-}
 
 const mockLeaderboard: LeaderboardEntry[] = [...mockUsers]
   .sort((a, b) => b.points - a.points)
@@ -33,13 +32,6 @@ export default function PredictionsPage() {
   const [authLoading, setAuthLoading] = useState(configured)
   const [leaderboardUsers, setLeaderboardUsers] = useState<LeaderboardEntry[]>(mockLeaderboard)
 
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showJoinModal, setShowJoinModal] = useState(false)
-  const [newLeagueName, setNewLeagueName] = useState("")
-  const [generatedCode] = useState(() => generateCode())
-  const [joinCode, setJoinCode] = useState("")
-  const [joinSuccess, setJoinSuccess] = useState(false)
-  const [createSuccess, setCreateSuccess] = useState(false)
 
   // Auth check + load user's predictions from Supabase
   useEffect(() => {
@@ -151,7 +143,7 @@ export default function PredictionsPage() {
   const tabs: { key: Tab; label: string }[] = [
     { key: "predictions", label: "My Predictions" },
     { key: "leaderboard", label: "Leaderboard" },
-    { key: "minileagues", label: "Mini Leagues" },
+    { key: "leagues", label: "Leagues" },
   ]
 
   return (
@@ -289,152 +281,16 @@ export default function PredictionsPage() {
             </div>
           )}
 
-          {/* Mini Leagues Tab */}
-          {activeTab === "minileagues" && (
-            <div className="space-y-4">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-500">
-                Your Leagues
-              </p>
-
-              {mockLeagues.map((league) => (
-                <div
-                  key={league.id}
-                  className="bg-gray-900 border border-white/10 rounded-2xl p-4"
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <h3 className="text-white font-bold">{league.name}</h3>
-                    {league.sponsored && (
-                      <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold">
-                        Sponsored
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-gray-400 text-xs mb-2">
-                    Code:{" "}
-                    <span className="font-mono bg-gray-800 px-2 py-1 rounded text-orange-400 text-sm">
-                      {league.code}
-                    </span>
-                  </p>
-                  <p className="text-gray-400 text-xs">{league.memberIds.length} members</p>
-                </div>
-              ))}
-
+          {/* Leagues Tab */}
+          {activeTab === "leagues" && (
+            <div className="space-y-8">
+              <MiniLeagues userId={userId} />
               <SponsorBanner slot={{ id: "league-sponsor", name: "Join a Sponsored League", type: "league", active: true }} />
-
-              {/* Action buttons */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="flex-1 py-2.5 rounded-xl border border-orange-500/50 text-orange-400 hover:border-orange-500 font-bold text-sm transition-all active:scale-95"
-                >
-                  Create League
-                </button>
-                <button
-                  onClick={() => setShowJoinModal(true)}
-                  className="flex-1 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl py-2.5 text-sm transition-all active:scale-95"
-                >
-                  Join League
-                </button>
-              </div>
+              <TournamentPicksSection userId={userId} />
             </div>
           )}
         </div>
       </div>
-
-      {/* Create League Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm">
-            <h2 className="text-white font-bold text-lg mb-4">Create a League</h2>
-            {createSuccess ? (
-              <div className="text-center py-4">
-                <p className="text-orange-400 font-bold text-xl mb-2">League Created!</p>
-                <p className="text-gray-400 text-sm mb-3">Share this code with friends:</p>
-                <p className="text-white font-mono font-black text-2xl bg-gray-800 rounded-xl px-4 py-3">
-                  {generatedCode}
-                </p>
-                <button
-                  onClick={() => { setShowCreateModal(false); setCreateSuccess(false); setNewLeagueName("") }}
-                  className="mt-4 w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <>
-                <label className="block text-gray-400 text-xs mb-1">League Name</label>
-                <input
-                  value={newLeagueName}
-                  onChange={(e) => setNewLeagueName(e.target.value)}
-                  placeholder="e.g. Office World Cup"
-                  className="w-full bg-gray-800 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/50 mb-4"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { setShowCreateModal(false); setNewLeagueName("") }}
-                    className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => { if (newLeagueName.trim()) setCreateSuccess(true) }}
-                    disabled={!newLeagueName.trim()}
-                    className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold text-sm transition-all active:scale-95"
-                  >
-                    Create
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Join League Modal */}
-      {showJoinModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm">
-            <h2 className="text-white font-bold text-lg mb-4">Join a League</h2>
-            {joinSuccess ? (
-              <div className="text-center py-4">
-                <p className="text-orange-400 font-bold text-xl mb-2">Joined!</p>
-                <p className="text-gray-400 text-sm">You have joined the league.</p>
-                <button
-                  onClick={() => { setShowJoinModal(false); setJoinSuccess(false); setJoinCode("") }}
-                  className="mt-4 w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <>
-                <label className="block text-gray-400 text-xs mb-1">League Code</label>
-                <input
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. OWC2026"
-                  className="w-full bg-gray-800 border border-white/10 rounded-xl px-3 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-orange-500/50 mb-4"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { setShowJoinModal(false); setJoinCode("") }}
-                    className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => { if (joinCode.trim()) setJoinSuccess(true) }}
-                    disabled={!joinCode.trim()}
-                    className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold text-sm transition-all active:scale-95"
-                  >
-                    Join
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </AppShell>
   )
 }

@@ -294,16 +294,36 @@ create policy "Users can create predictions" on public.predictions for insert wi
 create policy "Users can update own predictions" on public.predictions for update using (auth.uid() = user_id);
 
 -- MINI LEAGUES
-create policy "Members can read leagues" on public.mini_leagues for select using (
-  owner_id = auth.uid() or exists (select 1 from public.mini_league_members m where m.league_id = id and m.user_id = auth.uid())
-);
+-- Any authenticated user can read leagues so they can look up a league by
+-- invite code before joining (the code is intentionally shared).
+create policy "Authenticated users can read leagues" on public.mini_leagues for select using (auth.uid() is not null);
 create policy "Users can create leagues" on public.mini_leagues for insert with check (auth.uid() = owner_id);
 create policy "Owners can update leagues" on public.mini_leagues for update using (auth.uid() = owner_id);
 
 -- MINI LEAGUE MEMBERS
-create policy "Members can read membership" on public.mini_league_members for select using (auth.uid() = user_id);
+-- Any authenticated user can read memberships so member leaderboards are
+-- visible to all league participants.
+create policy "Authenticated users can read memberships" on public.mini_league_members for select using (auth.uid() is not null);
 create policy "Users can join leagues" on public.mini_league_members for insert with check (auth.uid() = user_id);
 create policy "Users can leave leagues" on public.mini_league_members for delete using (auth.uid() = user_id);
+
+-- ============================================================
+-- TOURNAMENT PICKS
+-- ============================================================
+create table if not exists public.tournament_picks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references auth.users(id) on delete cascade,
+  winner text,        -- team name
+  top_scorer text,    -- player name (free text)
+  mvp text,           -- player name (free text)
+  updated_at timestamptz not null default now()
+);
+alter table public.tournament_picks enable row level security;
+-- Anyone can read picks (public competition transparency).
+create policy "Anyone can read tournament picks" on public.tournament_picks for select using (true);
+-- Users can create/update only their own picks.
+create policy "Users can manage own picks" on public.tournament_picks
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- SAVED VENUES
 create policy "Users can manage saved venues" on public.saved_venues for all using (auth.uid() = user_id);
