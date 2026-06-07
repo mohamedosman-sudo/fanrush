@@ -72,28 +72,32 @@ export default function MatchDetailHero({ match }: MatchDetailHeroProps) {
 
   return (
     <div className="rounded-2xl overflow-hidden">
-      <div className="bg-gradient-to-b from-orange-950/50 via-gray-900 to-transparent px-6 pt-6 pb-4">
-        <div className="flex items-center justify-center mb-5">
+      <div className="bg-gradient-to-b from-orange-950/50 via-gray-900 to-transparent px-4 pt-5 pb-4">
+        <div className="flex items-center justify-center mb-4">
           <StatusBadge status={match.status} />
         </div>
 
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex flex-col items-center gap-2 flex-1">
-            <span className="text-6xl md:text-8xl">{match.homeTeam.flagEmoji}</span>
-            <span className="text-white font-black text-base text-center tracking-tight">{match.homeTeam.name}</span>
+        <div className="flex items-center justify-between mb-4">
+          {/* Home team */}
+          <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0 px-1">
+            <span className="text-5xl md:text-7xl leading-none">{match.homeTeam.flagEmoji}</span>
+            <span className="text-white font-black text-sm text-center tracking-tight w-full truncate px-1">
+              {match.homeTeam.name}
+            </span>
             <span className="text-gray-500 text-xs font-medium">{match.homeTeam.shortCode}</span>
           </div>
 
-          <div className="flex flex-col items-center px-4 flex-shrink-0">
+          {/* Score / VS */}
+          <div className="flex flex-col items-center px-2 flex-shrink-0">
             {match.status !== "upcoming" && match.homeScore !== undefined && match.awayScore !== undefined ? (
-              <span className="text-white font-black text-4xl tracking-tight">
+              <span className="text-white font-black text-3xl tracking-tight">
                 {match.homeScore} – {match.awayScore}
               </span>
             ) : (
               <>
                 <span
-                  className="text-white font-black text-2xl"
-                  style={{ textShadow: "0 0 20px rgba(249,115,22,0.6)" }}
+                  className="text-white font-black text-xl"
+                  style={{ textShadow: "0 0 16px rgba(249,115,22,0.6)" }}
                 >
                   VS
                 </span>
@@ -104,9 +108,12 @@ export default function MatchDetailHero({ match }: MatchDetailHeroProps) {
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-2 flex-1">
-            <span className="text-6xl md:text-8xl">{match.awayTeam.flagEmoji}</span>
-            <span className="text-white font-black text-base text-center tracking-tight">{match.awayTeam.name}</span>
+          {/* Away team */}
+          <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0 px-1">
+            <span className="text-5xl md:text-7xl leading-none">{match.awayTeam.flagEmoji}</span>
+            <span className="text-white font-black text-sm text-center tracking-tight w-full truncate px-1">
+              {match.awayTeam.name}
+            </span>
             <span className="text-gray-500 text-xs font-medium">{match.awayTeam.shortCode}</span>
           </div>
         </div>
@@ -119,33 +126,33 @@ export default function MatchDetailHero({ match }: MatchDetailHeroProps) {
         )}
       </div>
 
-      <div className="bg-gray-900 border border-white/10 rounded-2xl px-5 py-4 grid grid-cols-2 gap-4 mt-2">
-        <div className="flex items-center gap-2.5">
-          <span className="text-gray-500 text-lg">🏟️</span>
-          <div>
+      <div className="bg-gray-900 border border-white/10 rounded-2xl px-4 py-3 grid grid-cols-2 gap-3 mt-2">
+        <div className="flex items-start gap-2 min-w-0">
+          <span className="text-base flex-shrink-0 mt-0.5">🏟️</span>
+          <div className="min-w-0">
             <p className="text-gray-500 text-xs">Stadium</p>
-            <p className="text-white text-sm font-semibold">{match.stadium}</p>
+            <p className="text-white text-xs font-semibold leading-snug truncate">{match.stadium}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
-          <span className="text-gray-500 text-lg">📍</span>
-          <div>
+        <div className="flex items-start gap-2 min-w-0">
+          <span className="text-base flex-shrink-0 mt-0.5">📍</span>
+          <div className="min-w-0">
             <p className="text-gray-500 text-xs">City</p>
-            <p className="text-white text-sm font-semibold">{match.city}</p>
+            <p className="text-white text-xs font-semibold leading-snug truncate">{match.city}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
-          <span className="text-gray-500 text-lg">📅</span>
-          <div>
+        <div className="flex items-start gap-2 min-w-0">
+          <span className="text-base flex-shrink-0 mt-0.5">📅</span>
+          <div className="min-w-0">
             <p className="text-gray-500 text-xs">Date</p>
-            <p className="text-white text-sm font-semibold">{dateStr}</p>
+            <p className="text-white text-xs font-semibold leading-snug">{dateStr}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
-          <span className="text-gray-500 text-lg">🏆</span>
-          <div>
+        <div className="flex items-start gap-2 min-w-0">
+          <span className="text-base flex-shrink-0 mt-0.5">🏆</span>
+          <div className="min-w-0">
             <p className="text-gray-500 text-xs">Stage</p>
-            <p className="text-white text-sm font-semibold">{match.stage}</p>
+            <p className="text-white text-xs font-semibold leading-snug truncate">{match.stage}</p>
           </div>
         </div>
       </div>

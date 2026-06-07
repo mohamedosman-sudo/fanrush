@@ -109,6 +109,8 @@ export default function VenueCard({
             <button
               onClick={handleSave}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all min-h-[40px] ${
+                venue.bookingLink ? "" : "flex-1"
+              } ${
                 isSaved
                   ? "border-orange-500/60 text-orange-400"
                   : "border-white/20 hover:border-orange-500/50 text-gray-300 hover:text-orange-400"
@@ -116,7 +118,7 @@ export default function VenueCard({
             >
               🔖 {isSaved ? "Saved" : "Save"}
             </button>
-            {venue.bookingLink ? (
+            {venue.bookingLink && (
               <a
                 href={venue.bookingLink}
                 target="_blank"
@@ -125,8 +127,6 @@ export default function VenueCard({
               >
                 Book Now
               </a>
-            ) : (
-              <span className="text-gray-600 text-xs">Booking link coming soon</span>
             )}
           </div>
         ) : (
