@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 function isSupabaseConfigured() {
   return !!(
@@ -11,8 +11,30 @@ function isSupabaseConfigured() {
   )
 }
 
+/**
+ * Validate that a `next` value is a safe internal path.
+ * Accepts paths that start with "/" and are not protocol-relative ("//").
+ * Rejects anything else (external URLs, javascript:, etc.).
+ */
+function safeNextPath(next: string | null): string | null {
+  if (!next) return null
+  if (next.startsWith("/") && !next.startsWith("//")) return next
+  return null
+}
+
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = safeNextPath(searchParams.get("next"))
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -43,6 +65,13 @@ export default function LoginPage() {
         return
       }
 
+      // If a safe return path was provided, always honour it regardless of role.
+      if (returnTo) {
+        router.push(returnTo)
+        return
+      }
+
+      // Fallback: role-based default destination.
       const userId = data.user?.id
       if (userId) {
         const { data: profile } = await supabase
@@ -116,7 +145,7 @@ export default function LoginPage() {
           {demoMode && (
             <button
               type="button"
-              onClick={() => router.push("/home")}
+              onClick={() => router.push(returnTo ?? "/home")}
               className="w-full text-orange-400 text-sm font-medium py-2 hover:text-orange-300 transition-colors"
             >
               Continue as Demo User →
