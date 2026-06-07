@@ -275,7 +275,15 @@ export default function AdminSponsorsPage() {
               <div>
                 <h1 className="text-white font-black text-2xl">Sponsor Management</h1>
                 <p className="text-gray-400 text-sm mt-1">
-                  Create and manage sponsored placements across the app.
+                  Create and manage sponsored placements across the app.{" "}
+                  <a
+                    href="/advertise"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-400 hover:text-orange-300 transition-colors"
+                  >
+                    View public advertise page →
+                  </a>
                 </p>
               </div>
               <button

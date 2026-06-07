@@ -28,6 +28,7 @@ export default function LandingPage() {
               ["Predictions", "/predictions"],
               ["Business", "/business"],
               ["Pricing", "/pricing"],
+              ["Advertise", "/advertise"],
             ].map(([label, href]) => (
               <Link
                 key={href}
@@ -546,6 +547,7 @@ export default function LandingPage() {
                   {[
                     ["About", "/about"],
                     ["Pricing", "/pricing"],
+                    ["Advertise", "/advertise"],
                     ["Business", "/business"],
                     ["Legal", "/legal"],
                     ["Disclaimer", "/legal/disclaimer"],
