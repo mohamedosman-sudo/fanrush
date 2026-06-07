@@ -18,7 +18,10 @@ export default function AppShell({
   rightElement,
 }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "linear-gradient(180deg, #12121f 0%, #0a0a0f 280px)" }}
+    >
       <Header title={title} showBack={showBack} rightElement={rightElement} />
       <main className={`flex-1 ${showBottomNav ? "pb-24" : ""}`}>
         {children}

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import Leaderboard from "@/components/Leaderboard"
 import { useToast } from "@/components/Toast"
 
@@ -27,9 +28,11 @@ type LeagueMember = {
 
 interface MiniLeaguesProps {
   userId: string | null
+  /** Invite code pre-populated from the ?join= URL param. */
+  initialJoinCode?: string
 }
 
-export default function MiniLeagues({ userId }: MiniLeaguesProps) {
+export default function MiniLeagues({ userId, initialJoinCode = "" }: MiniLeaguesProps) {
   const { showToast } = useToast()
 
   // null = not yet loaded; [] = loaded + empty
@@ -43,6 +46,8 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
   const [createdCode, setCreatedCode] = useState("")
   const [creating, setCreating] = useState(false)
   const [createSuccess, setCreateSuccess] = useState(false)
+  const [codeCopied, setCodeCopied] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   // Join league
   const [showJoin, setShowJoin] = useState(false)
@@ -52,6 +57,9 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
   const [joinSuccess, setJoinSuccess] = useState(false)
   const [joinedName, setJoinedName] = useState("")
 
+  // Track whether we've auto-opened the join modal from the invite URL
+  const autoOpenedRef = useRef(false)
+
   // Load user's leagues on mount (once userId is known)
   useEffect(() => {
     if (!configured || !userId) return
@@ -59,7 +67,6 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
       const { createClient } = await import("@/lib/supabase/client")
       const supabase = createClient()
 
-      // Get all leagues the user belongs to
       const { data: memberships } = await supabase
         .from("mini_league_members")
         .select("league_id")
@@ -76,7 +83,6 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
 
       if (!leagueRows) { setLeagues([]); return }
 
-      // Get member counts in parallel
       const withCounts = await Promise.all(
         leagueRows.map(async (l) => {
           const { count } = await supabase
@@ -96,12 +102,24 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
     load()
   }, [userId])
 
+  // Auto-open the join modal when arriving via an invite link
+  useEffect(() => {
+    if (!initialJoinCode || autoOpenedRef.current) return
+    async function autoOpen() {
+      setJoinCode(initialJoinCode)
+      if (userId !== null) {
+        setShowJoin(true)
+        autoOpenedRef.current = true
+      }
+    }
+    autoOpen()
+  }, [initialJoinCode, userId])
+
   async function loadMembers(leagueId: string) {
     if (membersMap[leagueId] !== undefined) return
     const { createClient } = await import("@/lib/supabase/client")
     const supabase = createClient()
 
-    // Get member user_ids
     const { data: rows } = await supabase
       .from("mini_league_members")
       .select("user_id")
@@ -111,7 +129,6 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
 
     const userIds = rows.map((r) => r.user_id as string)
 
-    // Get their profiles
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, display_name, points")
@@ -225,6 +242,8 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
     setCreateName("")
     setCreateSuccess(false)
     setCreatedCode("")
+    setCodeCopied(false)
+    setLinkCopied(false)
   }
 
   function closeJoin() {
@@ -235,28 +254,65 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
     setJoinedName("")
   }
 
+  async function copyText(text: string, onCopied: (v: boolean) => void) {
+    try {
+      await navigator.clipboard.writeText(text)
+      onCopied(true)
+      setTimeout(() => onCopied(false), 2000)
+    } catch {
+      showToast("Couldn't copy — please copy manually.", "error")
+    }
+  }
+
+  const inviteLink =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/predictions?join=${createdCode}`
+      : `/predictions?join=${createdCode}`
+
+  // Login link that returns the user to the invite URL after authentication
+  const loginWithReturn = (code: string) =>
+    `/login?next=${encodeURIComponent(`/predictions?join=${code}`)}`
+
   return (
     <div className="space-y-4">
       <p className="text-xs font-black uppercase tracking-widest text-gray-500">
         Your Leagues
       </p>
 
+      {/* Invite CTA for unauthenticated users arriving via invite link */}
+      {!userId && initialJoinCode && (
+        <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 text-center space-y-3">
+          <p className="text-orange-400 font-semibold text-sm">
+            You&apos;ve been invited to join a league!
+          </p>
+          <p className="text-gray-400 text-xs">
+            Log in to accept the invite and see the league leaderboard.
+          </p>
+          <Link
+            href={loginWithReturn(initialJoinCode)}
+            className="inline-block bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors min-h-[44px] leading-[44px] py-0"
+          >
+            Log In to Join
+          </Link>
+        </div>
+      )}
+
       {/* League list */}
-      {!userId ? (
+      {!userId && !initialJoinCode ? (
         <p className="text-gray-500 text-sm text-center py-4">
           Log in to create or join a league.
         </p>
-      ) : leagues === null ? (
+      ) : userId && leagues === null ? (
         <div className="flex justify-center py-6">
           <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : leagues.length === 0 ? (
+      ) : userId && leagues !== null && leagues.length === 0 ? (
         <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 text-center">
           <p className="text-2xl mb-2">🏆</p>
           <p className="text-white font-semibold text-sm mb-1">No leagues yet</p>
           <p className="text-gray-500 text-xs">Create a league or join one with a code.</p>
         </div>
-      ) : (
+      ) : userId && leagues !== null ? (
         <div className="space-y-3">
           {leagues.map((league) => (
             <div
@@ -265,9 +321,9 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
             >
               <button
                 onClick={() => toggleExpand(league.id)}
-                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left"
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left min-h-[56px]"
               >
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-white font-bold text-sm">{league.name}</h3>
                   <p className="text-gray-400 text-xs mt-0.5">
                     Code:{" "}
@@ -303,20 +359,20 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Action buttons */}
       {userId && (
         <div className="flex gap-3">
           <button
             onClick={() => setShowCreate(true)}
-            className="flex-1 py-2.5 rounded-xl border border-orange-500/50 text-orange-400 hover:border-orange-500 font-bold text-sm transition-all active:scale-95"
+            className="flex-1 min-h-[44px] rounded-xl border border-orange-500/50 text-orange-400 hover:border-orange-500 font-bold text-sm transition-all active:scale-95"
           >
             + Create League
           </button>
           <button
             onClick={() => setShowJoin(true)}
-            className="flex-1 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl py-2.5 text-sm transition-all active:scale-95"
+            className="flex-1 min-h-[44px] bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl text-sm transition-all active:scale-95"
           >
             Join League
           </button>
@@ -326,19 +382,48 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
       {/* ── Create League Modal ─────────────────────────────── */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm">
+          <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-[calc(100vw-2rem)] sm:max-w-sm max-h-[90vh] overflow-y-auto">
             <h2 className="text-white font-bold text-lg mb-4">Create a League</h2>
 
             {createSuccess ? (
-              <div className="text-center py-2">
-                <p className="text-emerald-400 font-bold text-lg mb-1">League Created! 🎉</p>
-                <p className="text-gray-400 text-sm mb-4">Share this invite code with friends:</p>
-                <p className="text-white font-mono font-black text-3xl bg-gray-800 rounded-xl px-4 py-4 tracking-widest">
-                  {createdCode}
-                </p>
+              <div className="space-y-4">
+                <p className="text-emerald-400 font-bold text-lg text-center">League Created! 🎉</p>
+
+                {/* Code display */}
+                <div className="bg-gray-800 rounded-xl p-4 text-center">
+                  <p className="text-gray-400 text-xs mb-1">Invite Code</p>
+                  <p className="text-white font-mono font-black text-3xl tracking-widest">
+                    {createdCode}
+                  </p>
+                </div>
+
+                {/* Invite link */}
+                <div className="bg-gray-800 rounded-xl p-3">
+                  <p className="text-gray-400 text-xs mb-1">Invite Link</p>
+                  <p className="text-gray-300 text-xs font-mono break-all leading-relaxed">
+                    {inviteLink}
+                  </p>
+                </div>
+
+                {/* Copy buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => copyText(createdCode, setCodeCopied)}
+                    className="flex-1 min-h-[44px] rounded-xl border border-white/10 text-gray-300 text-sm font-medium hover:border-white/20 transition-all"
+                  >
+                    {codeCopied ? "✅ Code Copied" : "📋 Copy Code"}
+                  </button>
+                  <button
+                    onClick={() => copyText(inviteLink, setLinkCopied)}
+                    className="flex-1 min-h-[44px] rounded-xl bg-orange-500/20 border border-orange-500/30 text-orange-400 text-sm font-medium hover:bg-orange-500/30 transition-all"
+                  >
+                    {linkCopied ? "✅ Link Copied" : "🔗 Copy Link"}
+                  </button>
+                </div>
+
                 <button
                   onClick={closeCreate}
-                  className="mt-5 w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
+                  className="w-full min-h-[44px] rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
                 >
                   Done
                 </button>
@@ -350,19 +435,19 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
                   placeholder="e.g. Office World Cup"
-                  className="w-full bg-gray-800 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/50 mb-4"
+                  className="w-full bg-gray-800 border border-white/10 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-orange-500/50 mb-4"
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={closeCreate}
-                    className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
+                    className="flex-1 min-h-[44px] rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreate}
                     disabled={!createName.trim() || creating}
-                    className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold text-sm transition-all active:scale-95"
+                    className="flex-1 min-h-[44px] rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold text-sm transition-all active:scale-95"
                   >
                     {creating ? "Creating…" : "Create"}
                   </button>
@@ -376,20 +461,43 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
       {/* ── Join League Modal ───────────────────────────────── */}
       {showJoin && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm">
+          <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-[calc(100vw-2rem)] sm:max-w-sm max-h-[90vh] overflow-y-auto">
             <h2 className="text-white font-bold text-lg mb-4">Join a League</h2>
 
             {joinSuccess ? (
-              <div className="text-center py-2">
-                <p className="text-emerald-400 font-bold text-lg mb-2">Joined! 🎉</p>
+              <div className="text-center py-2 space-y-4">
+                <p className="text-emerald-400 font-bold text-lg">Joined! 🎉</p>
                 <p className="text-gray-400 text-sm">
-                  You are now in <span className="text-white font-semibold">{joinedName}</span>.
+                  You are now in{" "}
+                  <span className="text-white font-semibold">{joinedName}</span>.
                 </p>
                 <button
                   onClick={closeJoin}
-                  className="mt-5 w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
+                  className="w-full min-h-[44px] rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
                 >
                   Done
+                </button>
+              </div>
+            ) : !userId ? (
+              /* Unauthenticated user opened modal via invite link */
+              <div className="text-center space-y-4 py-2">
+                <p className="text-white font-semibold text-sm">
+                  Log in to join this league
+                </p>
+                <p className="text-gray-400 text-xs">
+                  You need an account to join and compete on the leaderboard.
+                </p>
+                <Link
+                  href={loginWithReturn(joinCode || initialJoinCode)}
+                  className="block w-full min-h-[44px] leading-[44px] rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm text-center transition-all"
+                >
+                  Log In to Join
+                </Link>
+                <button
+                  onClick={closeJoin}
+                  className="w-full min-h-[44px] rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
+                >
+                  Cancel
                 </button>
               </div>
             ) : (
@@ -400,7 +508,7 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   placeholder="e.g. ABC123"
                   maxLength={8}
-                  className="w-full bg-gray-800 border border-white/10 rounded-xl px-3 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-orange-500/50 mb-1"
+                  className="w-full bg-gray-800 border border-white/10 rounded-xl px-3 py-3 text-white font-mono focus:outline-none focus:border-orange-500/50 mb-1"
                 />
                 {joinError && (
                   <p className="text-red-400 text-xs mb-2">{joinError}</p>
@@ -408,14 +516,14 @@ export default function MiniLeagues({ userId }: MiniLeaguesProps) {
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={closeJoin}
-                    className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
+                    className="flex-1 min-h-[44px] rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleJoin}
                     disabled={!joinCode.trim() || joining}
-                    className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold text-sm transition-all active:scale-95"
+                    className="flex-1 min-h-[44px] rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold text-sm transition-all active:scale-95"
                   >
                     {joining ? "Joining…" : "Join"}
                   </button>

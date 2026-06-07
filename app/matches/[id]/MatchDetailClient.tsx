@@ -68,7 +68,7 @@ export default function MatchDetailClient({
     }
   }
 
-  async function handlePredict(homeScore: number, awayScore: number) {
+  async function handlePredict(homeScore: number, awayScore: number): Promise<void> {
     const newPrediction: Prediction = {
       id: `p-${match.id}-local`,
       userId: userId ?? "local",

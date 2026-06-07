@@ -1,6 +1,16 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import Providers from "@/components/Providers"
+
+/**
+ * Explicit viewport export (Next.js 15+ requirement).
+ * - width=device-width, initial-scale=1: standard responsive behaviour
+ * - No maximum-scale restriction: users can still pinch-zoom for accessibility
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   title: "FanRush — World Cup 2026 Fan Platform",

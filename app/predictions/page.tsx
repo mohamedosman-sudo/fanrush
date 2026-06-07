@@ -27,6 +27,7 @@ const mockLeaderboard: LeaderboardEntry[] = [...mockUsers]
 export default function PredictionsPage() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<Tab>("predictions")
+  const [initialJoinCode, setInitialJoinCode] = useState("")
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [userId, setUserId] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState(configured)
@@ -68,6 +69,19 @@ export default function PredictionsPage() {
     init()
   }, [])
 
+  // Read ?join= invite code from URL on mount and switch to Leagues tab
+  useEffect(() => {
+    async function readJoin() {
+      const params = new URLSearchParams(window.location.search)
+      const join = params.get("join")
+      if (join) {
+        setActiveTab("leagues")
+        setInitialJoinCode(join.toUpperCase())
+      }
+    }
+    readJoin()
+  }, [])
+
   // Load leaderboard from Supabase profiles
   useEffect(() => {
     if (!configured) return
@@ -96,7 +110,7 @@ export default function PredictionsPage() {
 
   const upcomingMatches = mockMatches.filter((m) => m.status === "upcoming")
 
-  async function handlePredict(matchId: string, homeScore: number, awayScore: number) {
+  async function handlePredict(matchId: string, homeScore: number, awayScore: number): Promise<void> {
     // Optimistic local update
     setPredictions((prev) => {
       const existing = prev.findIndex((p) => p.matchId === matchId)
@@ -284,7 +298,7 @@ export default function PredictionsPage() {
           {/* Leagues Tab */}
           {activeTab === "leagues" && (
             <div className="space-y-8">
-              <MiniLeagues userId={userId} />
+              <MiniLeagues userId={userId} initialJoinCode={initialJoinCode} />
               <SponsorBanner slot={{ id: "league-sponsor", name: "Join a Sponsored League", type: "league", active: true }} />
               <TournamentPicksSection userId={userId} />
             </div>

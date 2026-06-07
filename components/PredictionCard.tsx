@@ -7,7 +7,7 @@ import { storage, STORAGE_KEYS } from "@/lib/storage"
 interface PredictionCardProps {
   match: Match
   prediction?: Prediction
-  onPredict: (homeScore: number, awayScore: number) => void
+  onPredict: (homeScore: number, awayScore: number) => Promise<void>
   disabled?: boolean
 }
 
@@ -54,6 +54,7 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
     return saved[match.id] ? String(saved[match.id].awayScore) : ""
   })
   const [isEditing, setIsEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   function startEditing() {
     if (prediction) {
@@ -63,28 +64,36 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
     setIsEditing(true)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const h = parseInt(home)
     const a = parseInt(away)
-    if (!isNaN(h) && !isNaN(a) && h >= 0 && a >= 0) {
-      // Persist to localStorage
-      const saved = storage.get<Record<string, { homeScore: number; awayScore: number; points?: number }>>(
-        STORAGE_KEYS.PREDICTIONS,
-        {}
-      )
-      saved[match.id] = { homeScore: h, awayScore: a }
-      storage.set(STORAGE_KEYS.PREDICTIONS, saved)
+    if (isNaN(h) || isNaN(a) || h < 0 || a < 0 || saving) return
 
-      const newPrediction: Prediction = {
-        id: `p-${match.id}-local`,
-        userId: "local",
-        matchId: match.id,
-        homeScore: h,
-        awayScore: a,
-      }
-      setPrediction(newPrediction)
-      setIsEditing(false)
-      onPredict(h, a)
+    // Optimistic local update
+    const newPrediction: Prediction = {
+      id: `p-${match.id}-local`,
+      userId: "local",
+      matchId: match.id,
+      homeScore: h,
+      awayScore: a,
+    }
+    setPrediction(newPrediction)
+    setIsEditing(false)
+
+    // Persist to localStorage
+    const saved = storage.get<Record<string, { homeScore: number; awayScore: number; points?: number }>>(
+      STORAGE_KEYS.PREDICTIONS,
+      {}
+    )
+    saved[match.id] = { homeScore: h, awayScore: a }
+    storage.set(STORAGE_KEYS.PREDICTIONS, saved)
+
+    // Persist to Supabase (parent handles the async write)
+    setSaving(true)
+    try {
+      await onPredict(h, a)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -182,10 +191,10 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
             )}
             <button
               onClick={handleSubmit}
-              disabled={disabled || home === "" || away === ""}
-              className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all active:scale-95"
+              disabled={disabled || home === "" || away === "" || saving}
+              className="flex-1 min-h-[44px] rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all active:scale-95"
             >
-              {isEditing ? "Update Prediction ✏️" : "Submit Prediction 🎯"}
+              {saving ? "Saving…" : isEditing ? "Update Prediction ✏️" : "Submit Prediction 🎯"}
             </button>
           </div>
         </div>
