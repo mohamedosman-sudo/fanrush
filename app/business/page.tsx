@@ -358,6 +358,16 @@ export default function BusinessPage() {
                           )}
                         </div>
                       </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 mt-3">
+                        <Link
+                          href={`/business/events/${event.id}/edit`}
+                          className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all"
+                        >
+                          Edit
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
