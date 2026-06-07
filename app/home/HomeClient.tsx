@@ -58,7 +58,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
   })
 
   return (
-    <AppShell title="Home">
+    <AppShell>
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-8">
 
         {/* 1. TONIGHT'S RUSH HERO */}
@@ -115,19 +115,30 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
             <h2 className="text-white font-bold text-lg">Today&apos;s Matches</h2>
             <Link href="/matches" className="text-orange-400 text-sm hover:text-orange-300">See all →</Link>
           </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-            {todaysMatches.map((match) => (
-              <div key={match.id} className="min-w-[200px] flex-shrink-0">
-                <MatchCard match={match} compact />
-              </div>
-            ))}
+          {/*
+            Escape the section px-4 so the scroll track spans full screen width.
+            -mx-4 pulls it to the device edge; px-4 re-adds inner padding so the
+            first card starts flush with the rest of the page content.
+            snap-x mandatory gives smooth card-by-card scrolling on iOS/Android.
+          */}
+          <div className="-mx-4 overflow-x-auto no-scrollbar">
+            <div className="flex gap-3 px-4 pb-2 snap-x snap-mandatory">
+              {todaysMatches.map((match) => (
+                <div key={match.id} className="min-w-[168px] w-[168px] flex-shrink-0 snap-start">
+                  <MatchCard match={match} compact />
+                </div>
+              ))}
+              {/* trailing spacer so last card isn't flush against the right edge */}
+              <div className="w-4 flex-shrink-0" aria-hidden="true" />
+            </div>
           </div>
         </section>
 
         {/* 3. YOUR TEAMS */}
         <section>
           <h2 className="text-white font-bold text-lg mb-3">Your Teams</h2>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+          <div className="-mx-4 overflow-x-auto no-scrollbar">
+          <div className="flex gap-3 px-4 pb-1">
             {currentUser.favouriteTeams.length > 0 ? (
               currentUser.favouriteTeams.slice(0, 5).map((teamId) => {
                 const team = mockMatches
@@ -150,6 +161,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
                 Add teams →
               </Link>
             )}
+          </div>
           </div>
         </section>
 

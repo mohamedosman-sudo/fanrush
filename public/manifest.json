@@ -1,0 +1,24 @@
+{
+  "name": "FanRush — World Cup 2026",
+  "short_name": "FanRush",
+  "description": "Find watch parties, predict scores, and connect with fans for the 2026 World Cup.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

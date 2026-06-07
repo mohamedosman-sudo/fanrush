@@ -10,11 +10,21 @@ import Providers from "@/components/Providers"
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#f97316",
 }
 
 export const metadata: Metadata = {
   title: "FanRush — World Cup 2026 Fan Platform",
   description: "Find watch parties, predict scores, and connect with fans for the 2026 World Cup. FanRush is an independent fan platform.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "FanRush",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
