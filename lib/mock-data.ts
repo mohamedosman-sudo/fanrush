@@ -558,14 +558,20 @@ export const mockLeagues: League[] = [
 export const mockSponsorSlots: SponsorSlot[] = [
   {
     id: "s01",
-    name: "Coca-Cola Fan Zone Banner",
-    type: "banner",
+    title: "Coca-Cola Fan Zone",
+    subtitle: "Your official matchday refresh",
+    placement: "home",
+    emoji: "🥤",
+    target_url: "https://coca-cola.com",
     active: true,
   },
   {
     id: "s02",
-    name: "Adidas City Spotlight — New York",
-    type: "city",
+    title: "Adidas City Spotlight",
+    subtitle: "New York · Official kit partner",
+    placement: "watch-parties",
+    emoji: "👟",
+    target_url: "https://adidas.com",
     active: true,
   },
 ]

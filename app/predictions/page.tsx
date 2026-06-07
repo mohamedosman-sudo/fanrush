@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell"
 import PredictionCard from "@/components/PredictionCard"
 import Leaderboard from "@/components/Leaderboard"
 import SponsorBanner from "@/components/SponsorBanner"
-import { mockMatches, mockUsers, mockSponsorSlots } from "@/lib/mock-data"
+import { mockMatches, mockUsers } from "@/lib/mock-data"
 import MiniLeagues from "@/components/MiniLeagues"
 import TournamentPicksSection from "@/components/TournamentPicksSection"
 import { Prediction } from "@/lib/types"
@@ -184,7 +184,7 @@ export default function PredictionsPage() {
             </span>
           </div>
           <div className="mt-4">
-            <SponsorBanner slot={mockSponsorSlots[0]} />
+            <SponsorBanner placement="predictions" />
           </div>
         </div>
 
@@ -300,7 +300,7 @@ export default function PredictionsPage() {
           {activeTab === "leagues" && (
             <div className="space-y-8">
               <MiniLeagues userId={userId} initialJoinCode={initialJoinCode} />
-              <SponsorBanner slot={{ id: "league-sponsor", name: "Join a Sponsored League", type: "league", active: true }} />
+              <SponsorBanner placement="leagues" />
               <TournamentPicksSection userId={userId} />
             </div>
           )}

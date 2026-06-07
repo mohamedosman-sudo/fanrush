@@ -97,9 +97,18 @@ export type League = {
 
 export type SponsorSlot = {
   id: string
-  name: string
-  type: "banner" | "league" | "city"
+  title: string
+  subtitle?: string | null
+  placement: "home" | "predictions" | "watch-parties" | "leagues" | "match-detail" | "business" | "global"
+  emoji?: string | null
+  image_url?: string | null
+  target_url?: string | null
+  active_from?: string | null
+  active_until?: string | null
   active: boolean
+  clicks?: number
+  created_at?: string
+  updated_at?: string
 }
 
 export type Deal = {

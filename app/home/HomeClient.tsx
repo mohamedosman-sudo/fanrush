@@ -7,7 +7,7 @@ import MatchCard from "@/components/MatchCard"
 import VenueCard from "@/components/VenueCard"
 import Leaderboard from "@/components/Leaderboard"
 import SponsorBanner from "@/components/SponsorBanner"
-import { mockMatches, mockUsers, mockDeals, mockSponsorSlots, currentUser } from "@/lib/mock-data"
+import { mockMatches, mockUsers, mockDeals, currentUser } from "@/lib/mock-data"
 import { storage, STORAGE_KEYS } from "@/lib/storage"
 import { Venue } from "@/lib/types"
 
@@ -357,7 +357,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
 
         {/* 9. SPONSOR BANNER */}
         <section>
-          <SponsorBanner slot={mockSponsorSlots[0]} />
+          <SponsorBanner placement="home" />
         </section>
 
       </div>

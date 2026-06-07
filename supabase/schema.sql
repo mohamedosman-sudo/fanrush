@@ -206,11 +206,32 @@ create table if not exists public.saved_events (
 create table if not exists public.sponsor_slots (
   id uuid primary key default gen_random_uuid(),
   title text not null,
-  placement text not null check (placement in ('banner', 'league', 'city', 'match')),
-  sponsor_name text,
-  destination_url text,
+  subtitle text,
+  placement text not null check (placement in (
+    'home', 'predictions', 'watch-parties', 'leagues',
+    'match-detail', 'business', 'global'
+  )),
+  emoji text default '📣',
+  image_url text,
+  target_url text,
+  active_from timestamptz,
+  active_until timestamptz,
   active boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- SPONSOR CLICKS
+-- ============================================================
+create table if not exists public.sponsor_clicks (
+  id uuid primary key default gen_random_uuid(),
+  sponsor_slot_id uuid not null references public.sponsor_slots(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete set null,
+  placement text,
+  page_path text,
+  user_agent text,
+  clicked_at timestamptz not null default now()
 );
 
 -- ============================================================
@@ -242,6 +263,7 @@ alter table public.venue_matches enable row level security;
 alter table public.events enable row level security;
 alter table public.predictions enable row level security;
 alter table public.mini_leagues enable row level security;
+alter table public.sponsor_clicks enable row level security;
 alter table public.mini_league_members enable row level security;
 alter table public.saved_venues enable row level security;
 alter table public.saved_events enable row level security;
@@ -335,6 +357,30 @@ create policy "Users can manage saved events" on public.saved_events for all usi
 create policy "Anyone can read active sponsor slots" on public.sponsor_slots for select using (active = true);
 create policy "Admins can manage sponsor slots" on public.sponsor_slots for all using (get_my_role() = 'admin');
 
+-- SPONSOR CLICKS
+create policy "Anyone can record sponsor clicks" on public.sponsor_clicks for insert with check (true);
+create policy "Admins can read sponsor clicks" on public.sponsor_clicks for select using (get_my_role() = 'admin');
+
 -- DEALS
 create policy "Anyone can read active deals" on public.deals for select using (active = true);
 create policy "Admins can manage deals" on public.deals for all using (get_my_role() = 'admin');
+
+-- ============================================================
+-- MIGRATION: upgrade existing sponsor_slots table
+-- (idempotent — safe to run on a fresh schema too)
+-- ============================================================
+alter table public.sponsor_slots add column if not exists subtitle text;
+alter table public.sponsor_slots add column if not exists emoji text default '📣';
+alter table public.sponsor_slots add column if not exists image_url text;
+alter table public.sponsor_slots add column if not exists target_url text;
+alter table public.sponsor_slots add column if not exists active_from timestamptz;
+alter table public.sponsor_slots add column if not exists active_until timestamptz;
+alter table public.sponsor_slots add column if not exists updated_at timestamptz not null default now();
+
+-- Widen placement CHECK to the new value set
+alter table public.sponsor_slots drop constraint if exists sponsor_slots_placement_check;
+alter table public.sponsor_slots add constraint sponsor_slots_placement_check
+  check (placement in (
+    'home', 'predictions', 'watch-parties', 'leagues',
+    'match-detail', 'business', 'global'
+  ));

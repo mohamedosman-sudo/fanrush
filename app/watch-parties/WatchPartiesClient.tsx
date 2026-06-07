@@ -6,7 +6,7 @@ import FilterChips from "@/components/FilterChips"
 import VenueCard from "@/components/VenueCard"
 import EmptyState from "@/components/EmptyState"
 import SponsorBanner from "@/components/SponsorBanner"
-import { mockCities, mockTeams, mockMatches, mockSponsorSlots } from "@/lib/mock-data"
+import { mockCities, mockTeams, mockMatches } from "@/lib/mock-data"
 import { Venue } from "@/lib/types"
 
 const configured = !!(
@@ -108,8 +108,6 @@ export default function WatchPartiesClient({ venues, usingDemo }: Props) {
       return true
     })
   }, [venues, selectedCities, teamMatchIds, selectedPrice, familyFriendly, bigScreen, foodAvailable])
-
-  const bannerSlot = mockSponsorSlots.find((s) => s.type === "banner" && s.active)
 
   const toggleFilters = [
     { label: "📺 Big Screen", state: bigScreen, toggle: setBigScreen },
@@ -220,7 +218,7 @@ export default function WatchPartiesClient({ venues, usingDemo }: Props) {
 
         {/* Sponsor still shown to logged-out users */}
         <div className="px-4 pb-6 mt-6">
-          <SponsorBanner slot={bannerSlot} />
+          <SponsorBanner placement="watch-parties" />
         </div>
       </div>
     )
@@ -293,7 +291,7 @@ export default function WatchPartiesClient({ venues, usingDemo }: Props) {
       </div>
 
       <div className="px-4 pb-6 mt-6">
-        <SponsorBanner slot={bannerSlot} />
+        <SponsorBanner placement="watch-parties" />
       </div>
     </div>
   )
