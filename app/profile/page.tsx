@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AppShell from "@/components/AppShell"
 import FanPassportCard from "@/components/FanPassportCard"
 import MatchCard from "@/components/MatchCard"
@@ -8,6 +8,12 @@ import VenueCard from "@/components/VenueCard"
 import Badge from "@/components/Badge"
 import EmptyState from "@/components/EmptyState"
 import { currentUser, mockMatches, mockVenues, mockTeams } from "@/lib/mock-data"
+import { storage, STORAGE_KEYS } from "@/lib/storage"
+import { Prediction, User } from "@/lib/types"
+
+const configured = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 type ProfileTab = "overview" | "predictions" | "saved" | "badges"
 type SavedSubTab = "matches" | "venues"
@@ -20,11 +26,108 @@ const ALL_BADGES = [
   { name: "Super Fan", icon: "🏆", description: "Reach 20+ points" },
 ]
 
+/** Build a User object merging real Supabase data with localStorage and mock defaults. */
+function buildUser(opts: {
+  id: string
+  name: string
+  email: string
+  points: number
+  predictions: Prediction[]
+}): User {
+  const savedVenues = storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, currentUser.savedVenues)
+  const savedMatches = storage.get<string[]>(STORAGE_KEYS.SAVED_MATCHES, currentUser.savedMatches)
+  return {
+    ...currentUser,
+    id: opts.id,
+    name: opts.name,
+    email: opts.email,
+    points: opts.points,
+    predictions: opts.predictions,
+    savedVenues,
+    savedMatches,
+  }
+}
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("overview")
   const [savedSubTab, setSavedSubTab] = useState<SavedSubTab>("matches")
+  const [user, setUser] = useState<User>(() => {
+    // Start with the mock user; override with real data once loaded
+    const savedVenues = storage.get<string[]>(STORAGE_KEYS.SAVED_VENUES, currentUser.savedVenues)
+    const savedMatches = storage.get<string[]>(STORAGE_KEYS.SAVED_MATCHES, currentUser.savedMatches)
+    const storedPreds = storage.get<Record<string, { homeScore: number; awayScore: number; points?: number }>>(
+      STORAGE_KEYS.PREDICTIONS, {}
+    )
+    const localPredictions: Prediction[] = Object.entries(storedPreds).map(([matchId, v]) => ({
+      id: `local-${matchId}`,
+      userId: "local",
+      matchId,
+      homeScore: v.homeScore,
+      awayScore: v.awayScore,
+      points: v.points,
+    }))
+    return {
+      ...currentUser,
+      savedVenues,
+      savedMatches,
+      predictions: localPredictions.length > 0 ? localPredictions : currentUser.predictions,
+    }
+  })
+  const [loading, setLoading] = useState(configured)
 
-  const user = currentUser
+  useEffect(() => {
+    if (!configured) return
+
+    async function loadProfile() {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
+        setLoading(false)
+        return
+      }
+
+      // Load profile + predictions in parallel
+      const [profileRes, predsRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("display_name, points")
+          .eq("id", authUser.id)
+          .single(),
+        supabase
+          .from("predictions")
+          .select("*")
+          .eq("user_id", authUser.id)
+          .order("created_at", { ascending: false }),
+      ])
+
+      const profile = profileRes.data as { display_name: string | null; points: number | null } | null
+      const predsData = predsRes.data ?? []
+
+      const realPredictions: Prediction[] = predsData.map((row) => ({
+        id: row.id as string,
+        userId: row.user_id as string,
+        matchId: row.match_id as string,
+        homeScore: row.home_score as number,
+        awayScore: row.away_score as number,
+        points: row.points != null ? (row.points as number) : undefined,
+      }))
+
+      setUser(
+        buildUser({
+          id: authUser.id,
+          name: profile?.display_name ?? authUser.email?.split("@")[0] ?? currentUser.name,
+          email: authUser.email ?? currentUser.email,
+          points: profile?.points ?? 0,
+          predictions: realPredictions,
+        })
+      )
+      setLoading(false)
+    }
+
+    loadProfile()
+  }, [])
 
   const savedMatches = mockMatches.filter((m) => user.savedMatches.includes(m.id))
   const savedVenues = mockVenues.filter((v) => user.savedVenues.includes(v.id))
@@ -64,7 +167,13 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto">
         {/* Profile Hero */}
         <div className="px-4 pt-5 pb-0">
-          <FanPassportCard user={user} />
+          {loading ? (
+            <div className="bg-gray-900 border border-white/10 rounded-2xl p-5 flex items-center justify-center h-40">
+              <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <FanPassportCard user={user} />
+          )}
 
           {/* Stats strip */}
           <div className="flex border-t border-white/5 pt-4 mt-4">
@@ -136,7 +245,11 @@ export default function ProfilePage() {
           {/* Predictions Tab */}
           {activeTab === "predictions" && (
             <div className="space-y-3">
-              {user.predictions.length === 0 ? (
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : user.predictions.length === 0 ? (
                 <EmptyState
                   icon="🎯"
                   title="No predictions yet"

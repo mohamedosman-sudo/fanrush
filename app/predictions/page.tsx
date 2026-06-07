@@ -1,22 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import AppShell from "@/components/AppShell"
 import PredictionCard from "@/components/PredictionCard"
 import Leaderboard from "@/components/Leaderboard"
 import SponsorBanner from "@/components/SponsorBanner"
-import { mockMatches, mockUsers, mockLeagues, mockSponsorSlots, currentUser } from "@/lib/mock-data"
+import { mockMatches, mockUsers, mockLeagues, mockSponsorSlots } from "@/lib/mock-data"
 import { Prediction } from "@/lib/types"
+import { useToast } from "@/components/Toast"
+
+const configured = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 type Tab = "predictions" | "leaderboard" | "minileagues"
+type LeaderboardEntry = { name: string; points: number; avatar?: string; rank: number }
 
 function generateCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
+const mockLeaderboard: LeaderboardEntry[] = [...mockUsers]
+  .sort((a, b) => b.points - a.points)
+  .map((u, i) => ({ name: u.name, points: u.points, avatar: u.avatar, rank: i + 1 }))
+
 export default function PredictionsPage() {
+  const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<Tab>("predictions")
-  const [predictions, setPredictions] = useState<Prediction[]>(currentUser.predictions)
+  const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const [authLoading, setAuthLoading] = useState(configured)
+  const [leaderboardUsers, setLeaderboardUsers] = useState<LeaderboardEntry[]>(mockLeaderboard)
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
@@ -26,14 +41,76 @@ export default function PredictionsPage() {
   const [joinSuccess, setJoinSuccess] = useState(false)
   const [createSuccess, setCreateSuccess] = useState(false)
 
+  // Auth check + load user's predictions from Supabase
+  useEffect(() => {
+    if (!configured) return
+
+    async function init() {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id ?? null)
+
+      if (user) {
+        const { data } = await supabase
+          .from("predictions")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+        if (data) {
+          setPredictions(
+            data.map((row) => ({
+              id: row.id as string,
+              userId: row.user_id as string,
+              matchId: row.match_id as string,
+              homeScore: row.home_score as number,
+              awayScore: row.away_score as number,
+              points: row.points != null ? (row.points as number) : undefined,
+            }))
+          )
+        }
+      }
+      setAuthLoading(false)
+    }
+
+    init()
+  }, [])
+
+  // Load leaderboard from Supabase profiles
+  useEffect(() => {
+    if (!configured) return
+
+    async function loadLeaderboard() {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, points")
+        .order("points", { ascending: false })
+        .limit(20)
+      if (data && data.length > 0) {
+        setLeaderboardUsers(
+          data.map((row, i) => ({
+            name: (row.display_name as string | null) ?? "Fan",
+            points: (row.points as number | null) ?? 0,
+            rank: i + 1,
+          }))
+        )
+      }
+    }
+
+    loadLeaderboard()
+  }, [])
+
   const upcomingMatches = mockMatches.filter((m) => m.status === "upcoming")
 
-  const handlePredict = (matchId: string, homeScore: number, awayScore: number) => {
+  async function handlePredict(matchId: string, homeScore: number, awayScore: number) {
+    // Optimistic local update
     setPredictions((prev) => {
       const existing = prev.findIndex((p) => p.matchId === matchId)
       const newPred: Prediction = {
         id: `local-${matchId}`,
-        userId: currentUser.id,
+        userId: userId ?? "local",
         matchId,
         homeScore,
         awayScore,
@@ -45,21 +122,27 @@ export default function PredictionsPage() {
       }
       return [...prev, newPred]
     })
+
+    // Persist to Supabase when authenticated
+    if (configured && userId) {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      const { error } = await supabase.from("predictions").upsert(
+        { user_id: userId, match_id: matchId, home_score: homeScore, away_score: awayScore },
+        { onConflict: "user_id,match_id" }
+      )
+      if (error) {
+        showToast("Failed to save prediction — please try again.", "error")
+      }
+    }
   }
 
-  const sortedUsers = [...mockUsers].sort((a, b) => b.points - a.points).map((u, i) => ({
-    name: u.name,
-    points: u.points,
-    avatar: u.avatar,
-    rank: i + 1,
-  }))
-
-  const totalPredictions = mockUsers.reduce((acc, u) => acc + u.predictions.length, 0)
-  const avgScore = mockUsers.length
-    ? (mockUsers.reduce((acc, u) => acc + u.points, 0) / mockUsers.length).toFixed(1)
+  const totalLeaderboardPoints = leaderboardUsers.reduce((acc, u) => acc + u.points, 0)
+  const avgScore = leaderboardUsers.length
+    ? (totalLeaderboardPoints / leaderboardUsers.length).toFixed(1)
     : "0"
 
-  const top3 = sortedUsers.slice(0, 3)
+  const top3 = leaderboardUsers.slice(0, 3)
   // Podium order: 2nd, 1st, 3rd
   const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean)
   const podiumMedals = ["🥈", "🥇", "🥉"]
@@ -123,10 +206,33 @@ export default function PredictionsPage() {
           {/* My Predictions Tab */}
           {activeTab === "predictions" && (
             <div className="space-y-4">
+              {/* Auth notice for unauthenticated users */}
+              {!authLoading && !userId && configured && (
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 text-center">
+                  <p className="text-orange-400 font-semibold text-sm mb-1">
+                    Log in to save your predictions
+                  </p>
+                  <p className="text-gray-400 text-xs mb-3">
+                    Your score predictions are tracked locally. Sign in to compete on the leaderboard!
+                  </p>
+                  <Link
+                    href="/auth/login"
+                    className="inline-block bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-5 py-2 rounded-xl transition-colors"
+                  >
+                    Log In
+                  </Link>
+                </div>
+              )}
+
               <p className="text-xs font-black uppercase tracking-widest text-gray-500">
                 Upcoming matches to predict
               </p>
-              {upcomingMatches.length === 0 ? (
+
+              {authLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : upcomingMatches.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <span className="text-4xl mb-3">🎉</span>
                   <p className="text-white font-bold text-lg">All caught up!</p>
@@ -141,7 +247,7 @@ export default function PredictionsPage() {
                       match={match}
                       prediction={prediction}
                       onPredict={(h, a) => handlePredict(match.id, h, a)}
-                      disabled={match.status === "finished"}
+                      disabled={match.status !== "upcoming"}
                     />
                   )
                 })
@@ -175,11 +281,11 @@ export default function PredictionsPage() {
 
               {/* Stats row */}
               <p className="text-gray-400 text-xs text-center">
-                {totalPredictions} total predictions · Avg {avgScore} pts
+                {leaderboardUsers.length} fan{leaderboardUsers.length !== 1 ? "s" : ""} competing · Avg {avgScore} pts
               </p>
 
               {/* Full leaderboard */}
-              <Leaderboard users={sortedUsers} />
+              <Leaderboard users={leaderboardUsers} />
             </div>
           )}
 

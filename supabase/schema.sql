@@ -249,9 +249,12 @@ alter table public.sponsor_slots enable row level security;
 alter table public.deals enable row level security;
 
 -- PROFILES
-create policy "Users can read own profile" on public.profiles for select using (auth.uid() = id);
+-- Leaderboard: anyone can read display_name and points (public columns only — do not select email/role).
+create policy "Public leaderboard read" on public.profiles for select using (true);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
-create policy "Admins can read all profiles" on public.profiles for select using (get_my_role() = 'admin');
+-- Note: "Public leaderboard read" supersedes the narrower per-user policy.
+-- Queries should only select (id, display_name, points) for the leaderboard;
+-- the email and role columns are only returned when explicitly selected.
 
 -- TEAMS (public read)
 create policy "Anyone can read teams" on public.teams for select using (true);

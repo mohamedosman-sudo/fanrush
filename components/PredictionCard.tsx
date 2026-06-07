@@ -53,6 +53,15 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
     const saved = storage.get<Record<string, { homeScore: number; awayScore: number }>>(STORAGE_KEYS.PREDICTIONS, {})
     return saved[match.id] ? String(saved[match.id].awayScore) : ""
   })
+  const [isEditing, setIsEditing] = useState(false)
+
+  function startEditing() {
+    if (prediction) {
+      setHome(String(prediction.homeScore))
+      setAway(String(prediction.awayScore))
+    }
+    setIsEditing(true)
+  }
 
   const handleSubmit = () => {
     const h = parseInt(home)
@@ -74,9 +83,12 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
         awayScore: a,
       }
       setPrediction(newPrediction)
+      setIsEditing(false)
       onPredict(h, a)
     }
   }
+
+  const canEdit = match.status === "upcoming" && !disabled
 
   return (
     <div className="bg-gray-900 border border-white/10 rounded-2xl p-4">
@@ -99,20 +111,35 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
         </div>
       </div>
 
-      {prediction !== undefined ? (
-        <div className="flex items-center justify-center gap-4">
-          <div className="flex items-center gap-3 bg-gray-800 border border-white/10 rounded-2xl px-6 py-3">
-            <span className="text-white font-black text-2xl">{prediction.homeScore}</span>
-            <span className="text-gray-600 font-bold text-lg">–</span>
-            <span className="text-white font-black text-2xl">{prediction.awayScore}</span>
+      {prediction !== undefined && !isEditing ? (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 bg-gray-800 border border-white/10 rounded-2xl px-6 py-3">
+              <span className="text-white font-black text-2xl">{prediction.homeScore}</span>
+              <span className="text-gray-600 font-bold text-lg">–</span>
+              <span className="text-white font-black text-2xl">{prediction.awayScore}</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-emerald-400 text-lg">✓</span>
+              <span className="text-gray-400 text-xs">Your prediction</span>
+            </div>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-emerald-400 text-lg">✓</span>
-            <span className="text-gray-400 text-xs">Your prediction</span>
-          </div>
+          {canEdit && (
+            <button
+              onClick={startEditing}
+              className="text-gray-400 hover:text-orange-400 text-xs font-semibold border border-white/10 hover:border-orange-500/30 rounded-xl px-3 py-2 transition-all"
+            >
+              Edit
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
+          {isEditing && (
+            <p className="text-orange-400 text-xs font-semibold text-center">
+              ✏️ Update your prediction
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <div className="flex-1 flex flex-col items-center gap-1.5">
               <span className="text-gray-500 text-xs font-medium">{match.homeTeam.shortCode}</span>
@@ -142,13 +169,23 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
               />
             </div>
           </div>
-          <button
-            onClick={handleSubmit}
-            disabled={disabled || home === "" || away === ""}
-            className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all active:scale-95"
-          >
-            Submit Prediction 🎯
-          </button>
+          <div className="flex gap-2">
+            {isEditing && (
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:border-white/20 transition-all"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              onClick={handleSubmit}
+              disabled={disabled || home === "" || away === ""}
+              className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition-all active:scale-95"
+            >
+              {isEditing ? "Update Prediction ✏️" : "Submit Prediction 🎯"}
+            </button>
+          </div>
         </div>
       )}
     </div>

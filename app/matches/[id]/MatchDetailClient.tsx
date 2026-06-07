@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Match, Venue, Event, Prediction } from "@/lib/types"
 import MatchDetailHero from "@/components/MatchDetailHero"
 import VenueCard from "@/components/VenueCard"
@@ -25,6 +25,10 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "share", label: "Share" },
 ]
 
+const configured = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
 export default function MatchDetailClient({
   match,
   relatedVenues,
@@ -34,7 +38,19 @@ export default function MatchDetailClient({
   const [activeTab, setActiveTab] = useState<Tab>("info")
   const [prediction, setPrediction] = useState<Prediction | undefined>(existingPrediction)
   const [copied, setCopied] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
   const showComingSoon = useComingSoon()
+
+  useEffect(() => {
+    if (!configured) return
+    async function getUser() {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id ?? null)
+    }
+    getUser()
+  }, [])
 
   const shareText = `Watch ${match.homeTeam.name} ${match.homeTeam.flagEmoji} vs ${match.awayTeam.flagEmoji} ${match.awayTeam.name} — ${formatKickoffTime(match.kickoffTime)} at ${match.stadium}, ${match.city}. Find watch parties near you on FanRush!`
   const shareUrl =
@@ -52,15 +68,24 @@ export default function MatchDetailClient({
     }
   }
 
-  function handlePredict(homeScore: number, awayScore: number) {
+  async function handlePredict(homeScore: number, awayScore: number) {
     const newPrediction: Prediction = {
       id: `p-${match.id}-local`,
-      userId: "u01",
+      userId: userId ?? "local",
       matchId: match.id,
       homeScore,
       awayScore,
     }
     setPrediction(newPrediction)
+
+    if (configured && userId) {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      await supabase.from("predictions").upsert(
+        { user_id: userId, match_id: match.id, home_score: homeScore, away_score: awayScore },
+        { onConflict: "user_id,match_id" }
+      )
+    }
   }
 
   return (
