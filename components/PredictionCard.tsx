@@ -99,7 +99,7 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
         )}
       </div>
 
-      <div className="flex items-center justify-between mb-5">
+      <div className={`flex items-center justify-between ${prediction !== undefined && !isEditing ? "mb-2" : "mb-5"}`}>
         <div className="flex flex-col items-center gap-1.5 flex-1">
           <span className="text-3xl">{match.homeTeam.flagEmoji}</span>
           <span className="text-white text-sm font-bold">{match.homeTeam.shortCode}</span>
