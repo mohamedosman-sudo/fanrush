@@ -216,7 +216,7 @@ export default function PredictionsPage() {
                     Your score predictions are tracked locally. Sign in to compete on the leaderboard!
                   </p>
                   <Link
-                    href="/auth/login"
+                    href="/login"
                     className="inline-block bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-5 py-2 rounded-xl transition-colors"
                   >
                     Log In
