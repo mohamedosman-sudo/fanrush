@@ -217,6 +217,7 @@ export default function MatchDetailClient({
               prediction={prediction}
               onPredict={handlePredict}
               disabled={match.status !== "upcoming"}
+              isAuthenticated={!!userId}
             />
           </div>
         )}

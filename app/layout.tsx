@@ -11,6 +11,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#f97316",
+  // viewport-fit=cover lets the app draw edge-to-edge so we can use
+  // env(safe-area-inset-bottom) to pad the bottom nav above the iPhone
+  // home indicator — required for proper PWA standalone mode on iOS.
+  viewportFit: "cover",
 }
 
 export const metadata: Metadata = {

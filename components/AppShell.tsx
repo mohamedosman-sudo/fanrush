@@ -23,7 +23,11 @@ export default function AppShell({
       style={{ background: "linear-gradient(180deg, #12121f 0%, #0a0a0f 280px)" }}
     >
       <Header title={title} showBack={showBack} rightElement={rightElement} />
-      <main className={`flex-1 ${showBottomNav ? "pb-24" : ""}`}>
+      {/* pb accounts for fixed nav (4rem) + iPhone home-indicator safe area */}
+      <main
+        className="flex-1"
+        style={showBottomNav ? { paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" } : undefined}
+      >
         {children}
       </main>
       {showBottomNav && <BottomNav />}

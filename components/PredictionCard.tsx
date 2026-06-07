@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { Match, Prediction } from "@/lib/types"
 import { storage, STORAGE_KEYS } from "@/lib/storage"
@@ -9,6 +10,8 @@ interface PredictionCardProps {
   prediction?: Prediction
   onPredict: (homeScore: number, awayScore: number) => Promise<void>
   disabled?: boolean
+  /** When false, inputs are hidden and a login CTA is shown instead. */
+  isAuthenticated?: boolean
 }
 
 function PointsBadge({ points }: { points: number }) {
@@ -33,26 +36,49 @@ function PointsBadge({ points }: { points: number }) {
   )
 }
 
-export default function PredictionCard({ match, prediction: predictionProp, onPredict, disabled }: PredictionCardProps) {
+export default function PredictionCard({
+  match,
+  prediction: predictionProp,
+  onPredict,
+  disabled,
+  isAuthenticated = true,
+}: PredictionCardProps) {
+  /**
+   * Only hydrate state from localStorage when the user is authenticated.
+   * We never read or write local predictions for logged-out users — they
+   * must log in first, at which point Supabase becomes the source of truth.
+   */
   const [prediction, setPrediction] = useState<Prediction | undefined>(() => {
+    if (!isAuthenticated) return undefined
     if (predictionProp) return predictionProp
     const saved = storage.get<Record<string, { homeScore: number; awayScore: number; points?: number }>>(
       STORAGE_KEYS.PREDICTIONS, {}
     )
     const entry = saved[match.id]
     if (!entry) return undefined
-    return { id: `p-${match.id}-local`, userId: "local", matchId: match.id, homeScore: entry.homeScore, awayScore: entry.awayScore, points: entry.points }
+    return {
+      id: `p-${match.id}-local`,
+      userId: "local",
+      matchId: match.id,
+      homeScore: entry.homeScore,
+      awayScore: entry.awayScore,
+      points: entry.points,
+    }
   })
+
   const [home, setHome] = useState<string>(() => {
+    if (!isAuthenticated) return ""
     if (predictionProp) return String(predictionProp.homeScore)
     const saved = storage.get<Record<string, { homeScore: number; awayScore: number }>>(STORAGE_KEYS.PREDICTIONS, {})
     return saved[match.id] ? String(saved[match.id].homeScore) : ""
   })
   const [away, setAway] = useState<string>(() => {
+    if (!isAuthenticated) return ""
     if (predictionProp) return String(predictionProp.awayScore)
     const saved = storage.get<Record<string, { homeScore: number; awayScore: number }>>(STORAGE_KEYS.PREDICTIONS, {})
     return saved[match.id] ? String(saved[match.id].awayScore) : ""
   })
+
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -65,6 +91,7 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
   }
 
   const handleSubmit = async () => {
+    if (!isAuthenticated) return
     const h = parseInt(home)
     const a = parseInt(away)
     if (isNaN(h) || isNaN(a) || h < 0 || a < 0 || saving) return
@@ -80,7 +107,7 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
     setPrediction(newPrediction)
     setIsEditing(false)
 
-    // Persist to localStorage
+    // Persist to localStorage (authenticated users only)
     const saved = storage.get<Record<string, { homeScore: number; awayScore: number; points?: number }>>(
       STORAGE_KEYS.PREDICTIONS,
       {}
@@ -101,6 +128,7 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
 
   return (
     <div className="bg-gray-900 border border-white/10 rounded-2xl p-4">
+      {/* Card header: stage label + points badge */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-gray-500 text-xs font-medium">{match.stage}</span>
         {prediction?.points !== undefined && (
@@ -108,6 +136,7 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
         )}
       </div>
 
+      {/* Teams / VS row */}
       <div className={`flex items-center justify-between ${prediction !== undefined && !isEditing ? "mb-2" : "mb-5"}`}>
         <div className="flex flex-col items-center gap-1.5 flex-1">
           <span className="text-3xl">{match.homeTeam.flagEmoji}</span>
@@ -120,7 +149,23 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
         </div>
       </div>
 
-      {prediction !== undefined && !isEditing ? (
+      {/* ── Logged-out state ── */}
+      {!isAuthenticated && (
+        <div className="flex flex-col items-center gap-3 py-2">
+          <p className="text-gray-400 text-sm text-center">
+            Log in to save your prediction
+          </p>
+          <Link
+            href="/login?next=/predictions"
+            className="w-full text-center min-h-[44px] leading-[44px] rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
+          >
+            Log In to Predict 🎯
+          </Link>
+        </div>
+      )}
+
+      {/* ── Saved prediction (authenticated) ── */}
+      {isAuthenticated && prediction !== undefined && !isEditing && (
         <div className="flex flex-col items-center gap-2">
           <p className="text-gray-500 text-xs font-medium tracking-wide">
             ✓ Your prediction
@@ -144,7 +189,10 @@ export default function PredictionCard({ match, prediction: predictionProp, onPr
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* ── Input form (authenticated, no prediction yet or editing) ── */}
+      {isAuthenticated && (prediction === undefined || isEditing) && (
         <div className="space-y-3">
           {isEditing && (
             <p className="text-orange-400 text-xs font-semibold text-center">

@@ -254,6 +254,7 @@ export default function PredictionsPage() {
                       prediction={prediction}
                       onPredict={(h, a) => handlePredict(match.id, h, a)}
                       disabled={match.status !== "upcoming"}
+                      isAuthenticated={!!userId}
                     />
                   )
                 })
