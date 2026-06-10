@@ -148,7 +148,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
           <div className="-mx-4 overflow-x-auto no-scrollbar">
             <div className="flex gap-3 px-4 pb-2 snap-x snap-mandatory">
               {todaysMatches.map((match) => (
-                <div key={match.id} className="min-w-[168px] w-[168px] flex-shrink-0 snap-start">
+                <div key={match.id} className="min-w-[188px] w-[188px] flex-shrink-0 snap-start">
                   <MatchCard match={match} compact />
                 </div>
               ))}

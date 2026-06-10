@@ -24,7 +24,7 @@ export default function Header({ title, showBack, rightElement }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 h-14 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/5 px-4 flex items-center justify-between gap-2">
+    <header className="sticky top-0 z-50 h-14 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/5 px-4 flex items-center justify-between gap-2 select-none">
       {/* Left: back button + brand mark + optional page title */}
       <div className="flex items-center gap-2 min-w-0">
         {showBack ? (
@@ -32,7 +32,7 @@ export default function Header({ title, showBack, rightElement }: HeaderProps) {
             type="button"
             onClick={handleBack}
             aria-label="Go back"
-            className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-all font-bold"
+            className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-all font-bold touch-manipulation"
           >
             ←
           </button>

@@ -43,37 +43,46 @@ export default function MatchCard({ match, compact }: MatchCardProps) {
   })
 
   return (
-    <Link href={`/matches/${match.id}`}>
-      <div className="bg-gray-900 border border-white/10 rounded-2xl p-4 hover:border-orange-500/30 hover:bg-[#1a1a26] transition-all duration-200 cursor-pointer">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-gray-500 text-xs font-medium">{match.stage}</span>
-          <StatusBadge status={match.status} />
+    <Link href={`/matches/${match.id}`} className="block">
+      <div className="bg-gray-900 border border-white/10 rounded-2xl p-3 hover:border-orange-500/30 hover:bg-[#1a1a26] transition-all duration-200 cursor-pointer h-full">
+        {/* Header row: stage (truncated) + status badge */}
+        <div className="flex items-center justify-between gap-1 mb-3">
+          <span className="text-gray-500 text-[11px] font-medium truncate min-w-0 flex-1">
+            {compact ? match.stage.replace("Group Stage", "Group").replace("Round of ", "R") : match.stage}
+          </span>
+          <div className="flex-shrink-0">
+            <StatusBadge status={match.status} />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col items-center gap-1.5 flex-1">
-            <span className="text-3xl">{match.homeTeam.flagEmoji}</span>
-            <span className="text-white font-bold text-sm text-center">
+        {/* Teams row */}
+        <div className="flex items-center justify-between gap-1">
+          {/* Home team */}
+          <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
+            <span className="text-3xl leading-none">{match.homeTeam.flagEmoji}</span>
+            <span className="text-white font-bold text-xs text-center w-full truncate">
               {compact ? match.homeTeam.shortCode : match.homeTeam.name}
             </span>
           </div>
 
-          <div className="flex flex-col items-center px-4 flex-shrink-0">
+          {/* Score / time */}
+          <div className="flex flex-col items-center flex-shrink-0 px-2 min-w-0">
             {match.status !== "upcoming" && match.homeScore !== undefined && match.awayScore !== undefined ? (
-              <span className="text-white font-black text-3xl tracking-tight">
-                {match.homeScore} – {match.awayScore}
+              <span className="text-white font-black text-2xl tracking-tight whitespace-nowrap">
+                {match.homeScore}–{match.awayScore}
               </span>
             ) : (
               <>
-                <span className="text-gray-500 text-xs">{dateStr}</span>
-                <span className="text-orange-400 font-bold text-sm mt-0.5">{timeStr}</span>
+                <span className="text-gray-500 text-[11px] whitespace-nowrap">{dateStr}</span>
+                <span className="text-orange-400 font-bold text-xs mt-0.5 whitespace-nowrap">{timeStr}</span>
               </>
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-1.5 flex-1">
-            <span className="text-3xl">{match.awayTeam.flagEmoji}</span>
-            <span className="text-white font-bold text-sm text-center">
+          {/* Away team */}
+          <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
+            <span className="text-3xl leading-none">{match.awayTeam.flagEmoji}</span>
+            <span className="text-white font-bold text-xs text-center w-full truncate">
               {compact ? match.awayTeam.shortCode : match.awayTeam.name}
             </span>
           </div>

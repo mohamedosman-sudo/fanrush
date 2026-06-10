@@ -46,6 +46,19 @@ textarea {
   font-size: 16px;
 }
 
+/*
+ * Prevent accidental text selection on interactive controls.
+ * touch-action: manipulation eliminates the 300ms tap delay on mobile
+ * without disabling pinch-zoom on the page as a whole.
+ */
+button,
+a,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
 /* Hide scrollbar for chip rows */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

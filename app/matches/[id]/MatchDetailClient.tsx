@@ -111,8 +111,8 @@ export default function MatchDetailClient({
       {/* 1. HERO */}
       <MatchDetailHero match={match} />
 
-      {/* 2. TAB BAR */}
-      <div className="sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur border-b border-white/5">
+      {/* 2. TAB BAR — top-14 keeps it below the sticky Header (h-14 / 56 px) */}
+      <div className="sticky top-14 z-20 bg-[#0a0a0f]/95 backdrop-blur border-b border-white/5">
         <div className="max-w-2xl mx-auto flex overflow-x-auto no-scrollbar">
           {TABS.map((tab) => (
             <button

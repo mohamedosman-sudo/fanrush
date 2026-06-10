@@ -189,7 +189,7 @@ export default function PredictionsPage() {
         </div>
 
         {/* Tab Bar */}
-        <div className="sticky top-0 z-10 bg-[#0a0a0f]/95 backdrop-blur border-b border-white/5">
+        <div className="sticky top-14 z-10 bg-[#0a0a0f]/95 backdrop-blur border-b border-white/5">
           <div className="flex">
             {tabs.map((tab) => (
               <button
