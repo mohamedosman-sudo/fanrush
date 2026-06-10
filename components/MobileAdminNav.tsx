@@ -19,6 +19,12 @@ export default function MobileAdminNav({ links, title }: MobileAdminNavProps) {
   return (
     <div className="bg-[#0a0a0f] border-b border-white/5 px-4 py-2 md:hidden">
       <div className="flex items-center gap-3">
+        <Link
+          href="/home"
+          className="flex-shrink-0 text-xs text-gray-400 font-semibold hover:text-white transition-colors"
+        >
+          ← App
+        </Link>
         <span className="text-white font-bold text-sm flex-shrink-0">{title}</span>
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {links.map((link) => {

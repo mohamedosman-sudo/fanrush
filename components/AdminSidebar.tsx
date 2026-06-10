@@ -94,7 +94,7 @@ export default function AdminSidebar() {
 
       {/* Bottom */}
       <div className="pt-4 border-t border-white/5">
-        <Link href="/" className="text-xs text-gray-400 font-semibold hover:text-white transition-colors px-2">
+        <Link href="/home" className="text-xs text-gray-400 font-semibold hover:text-white transition-colors px-2">
           ← Back to App
         </Link>
       </div>

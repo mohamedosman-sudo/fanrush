@@ -66,7 +66,7 @@ export default function MatchesPage() {
   return (
     <AppShell title="Matches">
       {/* 1. FILTER BAR */}
-      <div className="sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/5 py-3 px-4 space-y-2">
+      <div className="sticky top-14 z-20 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/5 py-3 px-4 space-y-2">
         <FilterChips
           options={stageOptions}
           selected={selectedStages}
