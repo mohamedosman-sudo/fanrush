@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useUserRole } from "@/lib/hooks/useUserRole"
+import { useSession } from "@/lib/context/SessionContext"
 
 interface AccountMenuProps {
   email: string
@@ -11,7 +11,7 @@ interface AccountMenuProps {
 
 export default function AccountMenu({ email }: AccountMenuProps) {
   const [open, setOpen] = useState(false)
-  const { role } = useUserRole()
+  const { role, signOut } = useSession()
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -39,13 +39,7 @@ export default function AccountMenu({ email }: AccountMenuProps) {
 
   async function handleLogout() {
     setOpen(false)
-    try {
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
-      await supabase.auth.signOut()
-    } catch {
-      // Continue with client-side cleanup even if network call fails.
-    }
+    await signOut()
     router.push("/")
     router.refresh()
   }

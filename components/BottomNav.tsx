@@ -63,9 +63,14 @@ export default function BottomNav() {
   const pathname = usePathname()
   const loginStatus = useIsLoggedIn()
 
-  // Hide during auth check and when confirmed logged out.
-  // Demo mode (Supabase not configured) always shows the nav.
-  if (loginStatus !== "yes") return null
+  // Hide ONLY when we are certain the user is logged out.
+  //
+  // "loading" → keep nav visible (optimistic). The context resolves once on
+  //   first app load; route transitions always arrive with a warm "yes"/"no"
+  //   so this branch is only hit for a fraction of a second on first paint.
+  // "no" → confirmed logged out; hide the fan nav.
+  // "yes" → logged in (or demo mode); show the nav.
+  if (loginStatus === "no") return null
 
   return (
     <nav

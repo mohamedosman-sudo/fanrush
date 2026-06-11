@@ -150,7 +150,7 @@ test.describe("Bottom nav navigation", () => {
       "utf-8"
     )
     expect(src).toContain("useIsLoggedIn")
-    expect(src).toContain('loginStatus !== "yes"')
+    expect(src).toContain('loginStatus === "no"')
     expect(src).toContain("return null")
   })
 
@@ -347,7 +347,7 @@ test.describe("Navigation mode — source code checks", () => {
     )
     expect(src).toContain("useIsLoggedIn")
     // Guard: if loginStatus is not "yes", return null
-    expect(src).toContain('loginStatus !== "yes"')
+    expect(src).toContain('loginStatus === "no"')
   })
 
   test("Header imports useIsLoggedIn for dynamic logo href", async () => {
@@ -528,5 +528,92 @@ test.describe("Navigation mode — structural checks", () => {
     )
     expect(src).toContain('href="/home"')
     expect(src).toContain("Back to App")
+  })
+})
+
+// ─── SessionProvider: shared auth state architecture ─────────────────────────
+
+test.describe("SessionProvider — shared auth architecture", () => {
+  test("SessionContext exists and exports SessionProvider + useSession", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/lib/context/SessionContext.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("SessionProvider")
+    expect(src).toContain("useSession")
+    expect(src).toContain("onAuthStateChange")
+    // Should fetch role from profiles table
+    expect(src).toContain("profiles")
+    expect(src).toContain("role")
+  })
+
+  test("Providers.tsx wraps the app in SessionProvider", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/Providers.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("SessionProvider")
+  })
+
+  test("useIsLoggedIn reads from context, not Supabase directly", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/lib/hooks/useIsLoggedIn.ts",
+      "utf-8"
+    )
+    expect(src).toContain("useSession")
+    // Must NOT import or call supabase directly
+    expect(src).not.toContain("createClient")
+    expect(src).not.toContain("supabase.auth")
+  })
+
+  test("useUserRole reads from context, not Supabase directly", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/lib/hooks/useUserRole.ts",
+      "utf-8"
+    )
+    expect(src).toContain("useSession")
+    expect(src).not.toContain("createClient")
+    expect(src).not.toContain("supabase.auth")
+  })
+
+  test("AuthNav reads from context, not its own Supabase subscription", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AuthNav.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("useSession")
+    expect(src).not.toContain("onAuthStateChange")
+    expect(src).not.toContain("supabase.auth.getUser")
+  })
+
+  test("AccountMenu reads signOut from context, not direct Supabase call", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("useSession")
+    expect(src).toContain("signOut")
+    // signOut from context, not own createClient import inside handleLogout
+    expect(src).not.toContain("supabase.auth.signOut")
+  })
+
+  test("BottomNav shows optimistically during loading (hides only on confirmed logout)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BottomNav.tsx",
+      "utf-8"
+    )
+    // Guard should be "=== no" not "!== yes" — so it stays visible during loading
+    expect(src).toContain('loginStatus === "no"')
+    expect(src).not.toContain('loginStatus !== "yes"')
+  })
+
+  // Browser: verify no bottom nav appears after auth resolves as logged-out
+  test.use({ viewport: { width: 390, height: 844 } })
+  test("logged-out user on /home: no fixed bottom nav after auth resolves", async ({ page }) => {
+    await page.goto("/home")
+    // Wait for auth to resolve (networkidle covers the Supabase getUser call)
+    await page.waitForLoadState("networkidle")
+    const fixedNav = page.locator("nav.fixed")
+    await expect(fixedNav).not.toBeVisible()
   })
 })

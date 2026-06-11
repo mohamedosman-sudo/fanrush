@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSession } from "@/lib/context/SessionContext"
 
 type Status = "loading" | "yes" | "no"
 
@@ -9,37 +9,22 @@ const configured = !!(
 )
 
 /**
- * Lightweight hook that answers "is the current user logged in?"
+ * Thin context reader — no network calls.
  *
  * Returns:
- *   "loading" — auth check in progress (hide auth-dependent UI to avoid flash)
- *   "yes"     — authenticated
+ *   "loading" — only during the very first app load (single check, never again)
+ *   "yes"     — authenticated (or demo mode)
  *   "no"      — confirmed logged out
  *
- * When Supabase is not configured (demo mode), always returns "yes" so the
- * full app UI is accessible for testing / demo purposes.
+ * Demo mode (Supabase not configured) always returns "yes" so the full app
+ * UI is accessible for testing / development without credentials.
  */
 export function useIsLoggedIn(): Status {
-  const [status, setStatus] = useState<Status>(configured ? "loading" : "yes")
+  const { isLoggedIn, isLoading } = useSession()
 
-  useEffect(() => {
-    if (!configured) return
-    let cancelled = false
+  // Demo mode: always "logged in" for nav/shell purposes.
+  if (!configured) return "yes"
 
-    async function check() {
-      try {
-        const { createClient } = await import("@/lib/supabase/client")
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!cancelled) setStatus(user ? "yes" : "no")
-      } catch {
-        if (!cancelled) setStatus("no")
-      }
-    }
-
-    check()
-    return () => { cancelled = true }
-  }, [])
-
-  return status
+  if (isLoading) return "loading"
+  return isLoggedIn ? "yes" : "no"
 }

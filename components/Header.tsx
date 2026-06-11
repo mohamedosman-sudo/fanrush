@@ -16,7 +16,9 @@ interface HeaderProps {
 export default function Header({ title, showBack, rightElement }: HeaderProps) {
   const router = useRouter()
   const loginStatus = useIsLoggedIn()
-  // Logged-out users on preview pages should return to the landing page, not /home.
+  // Only point the logo at "/" when we are certain the user is logged out.
+  // "loading" defaults to "/home" so logged-in users never see a flash to "/".
+  // Route transitions are always instant (context is warm) so this is stable.
   const logoHref = loginStatus === "no" ? "/" : "/home"
 
   function handleBack() {
