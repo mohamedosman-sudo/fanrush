@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
 
             <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
               <p className="text-yellow-300 text-sm font-semibold">
-                Admin console: Supabase authentication and role-based access are enabled. Some actions may still use demo/mock data until fully connected.
+                Admin console — Supabase authentication and role-based access are active.
               </p>
             </div>
 

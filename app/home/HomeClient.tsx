@@ -237,7 +237,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
           {isAuthenticated && (
             <>
               {usingDemo && (
-                <p className="text-yellow-400/70 text-xs mb-2">Sample venues — connect Supabase for live listings.</p>
+                <p className="text-yellow-400/70 text-xs mb-2">Fan zones are being confirmed — check back soon.</p>
               )}
               <div className="space-y-3">
                 {nearbyVenues.length > 0 ? (
@@ -280,7 +280,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
               <Link href="/watch-parties" className="text-orange-400 text-sm hover:text-orange-300">See all →</Link>
             </div>
             {usingDemo && (
-              <p className="text-yellow-400/70 text-xs mb-2">Sample venues — connect Supabase for live listings.</p>
+              <p className="text-yellow-400/70 text-xs mb-2">Fan zones are being confirmed — check back soon.</p>
             )}
             <div className="space-y-3">
               {featuredVenues.map((venue) => (
@@ -308,7 +308,7 @@ export default function HomeClient({ nearbyVenues, featuredVenues, usingDemo }: 
                     {deal.discount}
                   </div>
                   <div className="block text-orange-500 text-sm font-semibold">
-                    {deal.affiliateLink ? "Get Deal →" : "Partner link coming soon"}
+                    {deal.affiliateLink ? "Get Deal →" : "View Deal →"}
                   </div>
                 </>
               )

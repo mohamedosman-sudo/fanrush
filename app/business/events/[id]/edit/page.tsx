@@ -296,7 +296,7 @@ export default function EditEventPage({
           <div className="max-w-2xl mx-auto px-4 pt-4">
             <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3">
               <p className="text-orange-300 text-sm font-semibold">
-                Demo mode — connect Supabase to enable real event editing.
+                Preview mode — connect Supabase to enable live event editing.
               </p>
             </div>
           </div>

@@ -186,7 +186,7 @@ export default function AddVenuePage() {
               Your venue has been submitted. Our team will review it and it will go live within 24 hours.
             </p>
             <p className="text-yellow-400/70 text-xs mt-3">
-              Demo mode — connect Supabase to persist this submission.
+              Preview mode — connect Supabase to persist submissions.
             </p>
             <div className="flex gap-2 mt-6 justify-center flex-wrap">
               <button
@@ -399,7 +399,7 @@ export default function AddVenuePage() {
               className={`${inputCls} ${errors.imageUrl ? "border-red-500/60" : ""}`}
             />
             {errors.imageUrl && <p className="text-red-400 text-xs mt-1">{errors.imageUrl}</p>}
-            <p className="text-gray-600 text-xs">Image upload coming soon — paste a URL for now.</p>
+            <p className="text-gray-600 text-xs">Paste a hosted image URL — direct upload will be added soon.</p>
           </div>
 
           {/* Submit */}

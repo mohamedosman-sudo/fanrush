@@ -242,7 +242,7 @@ export default function PredictionsPage() {
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <span className="text-4xl mb-3">🎉</span>
                   <p className="text-white font-bold text-lg">All caught up!</p>
-                  <p className="text-gray-400 text-sm mt-1">New matches coming soon</p>
+                  <p className="text-gray-400 text-sm mt-1">New matches will appear here as the tournament progresses</p>
                 </div>
               ) : (
                 upcomingMatches.map((match) => {

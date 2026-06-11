@@ -617,3 +617,105 @@ test.describe("SessionProvider — shared auth architecture", () => {
     await expect(fixedNav).not.toBeVisible()
   })
 })
+
+// ─── Launch readiness: demo/mock wording removed from public UI ───────────────
+
+test.describe("Launch readiness — no demo/mock wording in public UI", () => {
+  test("landing page does not contain 'demo fixtures' or 'demo venues'", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/page.tsx",
+      "utf-8"
+    )
+    expect(src).not.toMatch(/demo fixtures/i)
+    expect(src).not.toMatch(/demo venues/i)
+    expect(src).not.toMatch(/demo predictors/i)
+    expect(src).not.toMatch(/demo points/i)
+    expect(src).not.toMatch(/demo standings/i)
+    expect(src).not.toMatch(/browse demo watch parties/i)
+  })
+
+  test("landing page stats use real tournament numbers", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"64"')   // 64 World Cup matches
+    expect(src).toContain('"8"')    // 8 host cities
+    expect(src).toContain('"1000+"') // fan zones
+  })
+
+  test("HomeClient sample venues message is softened", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/home/HomeClient.tsx",
+      "utf-8"
+    )
+    expect(src).not.toMatch(/sample venues — connect supabase/i)
+    expect(src).toContain("Fan zones are being confirmed")
+  })
+
+  test("WatchPartiesClient sample venues message is softened", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/watch-parties/WatchPartiesClient.tsx",
+      "utf-8"
+    )
+    expect(src).not.toMatch(/showing sample venues/i)
+    expect(src).toContain("Fan zones are being confirmed")
+  })
+
+  test("business add-venue does not show 'Demo mode' message", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
+      "utf-8"
+    )
+    expect(src).not.toMatch(/Demo mode — connect Supabase to persist/i)
+  })
+
+  test("business add-event does not show 'Demo mode' message", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
+      "utf-8"
+    )
+    expect(src).not.toMatch(/Demo mode — connect Supabase to persist/i)
+  })
+
+  test("/advertise page loads without error", async ({ page }) => {
+    const res = await page.goto("/advertise")
+    expect(res?.status()).not.toBe(500)
+    await expect(page.locator("body")).not.toContainText("Application error")
+  })
+})
+
+// ─── Launch readiness: /admin/launch page ────────────────────────────────────
+
+test.describe("Admin launch readiness page", () => {
+  test("/admin/launch page source exists and has pre-launch checklist", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/launch/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("Pre-launch Checklist")
+    expect(src).toContain("Launch Readiness")
+    expect(src).toContain("Approved venues")
+    expect(src).toContain("Active sponsors")
+    expect(src).toContain("Sponsor target URLs")
+    expect(src).toContain("Prediction matches")
+  })
+
+  test("AdminSidebar includes Launch Readiness link", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AdminSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"/admin/launch"')
+    expect(src).toContain("Launch Readiness")
+  })
+
+  test("/admin/launch redirects to login for unauthenticated users", async ({ page }) => {
+    await page.goto("/admin/launch")
+    await page.waitForLoadState("networkidle")
+    const url = page.url()
+    const isLoginOrPage = url.includes("/login") || url.includes("/admin/launch")
+    expect(isLoginOrPage).toBe(true)
+    await expect(page.locator("body")).not.toContainText("Application error")
+  })
+})

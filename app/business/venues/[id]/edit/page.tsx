@@ -325,7 +325,7 @@ export default function EditVenuePage({
           <div className="max-w-2xl mx-auto px-4 pt-4">
             <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3">
               <p className="text-orange-300 text-sm font-semibold">
-                Demo mode — connect Supabase to enable real venue editing.
+                Preview mode — connect Supabase to enable live venue editing.
               </p>
             </div>
           </div>
@@ -510,7 +510,7 @@ export default function EditVenuePage({
               className={`${inputCls} ${errors.imageUrl ? "border-red-500/60" : ""}`}
             />
             {errors.imageUrl && <p className="text-red-400 text-xs mt-1">{errors.imageUrl}</p>}
-            <p className="text-gray-600 text-xs">Image upload coming soon — paste a URL for now.</p>
+            <p className="text-gray-600 text-xs">Paste a hosted image URL — direct upload will be added soon.</p>
           </div>
 
           {/* Actions */}

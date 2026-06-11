@@ -95,7 +95,7 @@ export default function LandingPage() {
         </div>
 
         {/* Social proof */}
-        <p className="text-gray-500 text-sm">12 demo fixtures · 9 demo venues · Free to explore</p>
+        <p className="text-gray-500 text-sm">World Cup 2026 · 8 host cities · Free for fans</p>
 
         {/* Phone mockup */}
         <div className="mt-16 relative">
@@ -192,7 +192,7 @@ export default function LandingPage() {
               {
                 icon: "🗺️",
                 title: "Venue Discovery",
-                desc: "Browse demo watch parties across 8 host cities. Filter by vibe, price, and capacity.",
+                desc: "Browse watch parties across 8 host cities. Filter by vibe, price, and capacity.",
                 bullets: ["Free & ticketed options", "Ratings & reviews", "One-tap directions"],
               },
               {
@@ -298,7 +298,7 @@ export default function LandingPage() {
               <div className="bg-gray-900 border border-white/10 rounded-2xl overflow-hidden mb-8">
                 <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
                   <span className="text-white font-bold text-sm">Global Leaderboard</span>
-                  <span className="text-gray-500 text-xs">Demo standings</span>
+                  <span className="text-gray-500 text-xs">Early access standings</span>
                 </div>
                 {[
                   { rank: "🥇", name: "Alex Rivera", pts: "87 pts", city: "New York" },
@@ -330,9 +330,9 @@ export default function LandingPage() {
             {/* Right: stats */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { v: "12", l: "Demo Fixtures" },
-                { v: "5", l: "Demo Predictors" },
-                { v: "80", l: "Demo Points" },
+                { v: "64", l: "Matches" },
+                { v: "8", l: "Host Cities" },
+                { v: "1000+", l: "Fan Zones" },
                 { v: "Free", l: "to Play" },
               ].map((s) => (
                 <div

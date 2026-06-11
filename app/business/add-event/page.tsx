@@ -179,7 +179,7 @@ export default function AddEventPage() {
               Your event has been submitted and will be reviewed by our team. It will go live within 24 hours.
             </p>
             <p className="text-yellow-400/70 text-xs mt-3">
-              Demo mode — connect Supabase to persist this submission.
+              Preview mode — connect Supabase to persist submissions.
             </p>
             <div className="flex gap-2 mt-6 justify-center flex-wrap">
               <button

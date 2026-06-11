@@ -232,7 +232,7 @@ export default function WatchPartiesClient({ venues, usingDemo }: Props) {
       {usingDemo && (
         <div className="mx-4 mb-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-2.5">
           <p className="text-yellow-300 text-xs font-semibold">
-            Showing sample venues — connect Supabase to see live approved listings.
+            Fan zones are being confirmed for launch — more venues coming soon.
           </p>
         </div>
       )}

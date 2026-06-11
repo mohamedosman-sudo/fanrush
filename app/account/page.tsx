@@ -156,7 +156,7 @@ export default function AccountPage() {
               Sign Out
             </button>
           ) : (
-            <p className="text-gray-600 text-sm">Demo mode — sign out not available</p>
+            <p className="text-gray-600 text-sm">Preview mode — connect Supabase to enable sign out</p>
           )}
         </div>
 

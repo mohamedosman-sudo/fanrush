@@ -266,7 +266,7 @@ export default function BusinessPage() {
             {usingDemo && (
               <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
                 <p className="text-yellow-300 text-sm font-semibold">
-                  Demo data — connect Supabase and log in as a business user to see your live venues and events.
+                  Preview mode — connect Supabase and log in as a business user to see your live listings.
                 </p>
               </div>
             )}
