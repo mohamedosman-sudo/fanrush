@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useUserRole } from "@/lib/hooks/useUserRole"
 
 type AuthUser = { id: string; email: string } | null
 
@@ -14,6 +15,7 @@ export default function AuthNav({ compact = false }: { compact?: boolean }) {
   const [authUser, setAuthUser] = useState<AuthUser>(null)
   const [checked, setChecked] = useState(!configured)
   const router = useRouter()
+  const { role } = useUserRole()
 
   useEffect(() => {
     if (!configured) return
@@ -81,6 +83,33 @@ export default function AuthNav({ compact = false }: { compact?: boolean }) {
 
     return (
       <div className="flex items-center gap-2">
+        {/* Role-based dashboard shortcut — ensures elevated users are never stranded */}
+        {role === "admin" && (
+          <Link
+            href="/admin"
+            className="px-3 py-1.5 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-400 text-xs font-bold transition-all hidden sm:flex items-center gap-1.5"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+            </svg>
+            Admin
+          </Link>
+        )}
+        {role === "business" && (
+          <Link
+            href="/business"
+            className="px-3 py-1.5 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-400 text-xs font-bold transition-all hidden sm:flex items-center gap-1.5"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 21V7l9-4 9 4v14M9 21V12h6v9" />
+            </svg>
+            Business
+          </Link>
+        )}
+
         <Link
           href="/account"
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 transition-all"

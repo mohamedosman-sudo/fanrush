@@ -61,11 +61,11 @@ export default function AdminSidebar() {
 
   return (
     <aside className="w-56 bg-[#0a0a0f] border-r border-white/5 min-h-screen hidden md:flex flex-col p-4">
-      {/* Logo */}
+      {/* Logo — clicking returns to the main app */}
       <div className="px-2 py-3 mb-6">
-        <div className="text-white font-black text-xl">
+        <Link href="/home" className="inline-flex items-center gap-1 text-white font-black text-xl hover:opacity-80 transition-opacity">
           <span className="text-orange-500">⚡</span>FanRush
-        </div>
+        </Link>
         <p className="text-xs font-black uppercase tracking-widest text-gray-500 mt-1">Admin Panel</p>
       </div>
 
@@ -93,9 +93,16 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="pt-4 border-t border-white/5">
-        <Link href="/home" className="text-xs text-gray-400 font-semibold hover:text-white transition-colors px-2">
-          ← Back to App
+      <div className="pt-4 border-t border-white/5 space-y-2">
+        <Link
+          href="/home"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+            <path d="M9 21V12h6v9" />
+          </svg>
+          Back to App
         </Link>
       </div>
     </aside>

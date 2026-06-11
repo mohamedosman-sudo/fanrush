@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import AppShell from "@/components/AppShell"
 import FanPassportCard from "@/components/FanPassportCard"
 import MatchCard from "@/components/MatchCard"
@@ -10,6 +11,7 @@ import EmptyState from "@/components/EmptyState"
 import { currentUser, mockMatches, mockVenues, mockTeams } from "@/lib/mock-data"
 import { storage, STORAGE_KEYS } from "@/lib/storage"
 import { Prediction, User } from "@/lib/types"
+import { useUserRole } from "@/lib/hooks/useUserRole"
 
 const configured = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -52,6 +54,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("overview")
   const [savedSubTab, setSavedSubTab] = useState<SavedSubTab>("matches")
   const [tournamentPicks, setTournamentPicks] = useState<{ winner: string; topScorer: string; mvp: string } | null>(null)
+  const { role } = useUserRole()
 
   const [user, setUser] = useState<User>(() => {
     // Start with the mock user; override with real data once loaded
@@ -254,6 +257,34 @@ export default function ProfilePage() {
                   <p className="text-white font-semibold text-sm">📍 {userCity}</p>
                 </div>
               </div>
+
+              {/* Role action card — admin/business users get a shortcut back to their dashboard */}
+              {(role === "admin" || role === "business") && (
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2">
+                    {role === "admin" ? "Admin Access" : "Business Account"}
+                  </p>
+                  <div className="bg-orange-500/10 border border-orange-500/25 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-black uppercase tracking-wide">
+                        {role === "admin" ? "Admin" : "Business"}
+                      </span>
+                      <span className="text-gray-400 text-xs">
+                        {role === "admin" ? "Admin access is active on this account" : "Manage your venues and events"}
+                      </span>
+                    </div>
+                    <Link
+                      href={role === "admin" ? "/admin" : "/business"}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all active:scale-95"
+                    >
+                      {role === "admin" ? "Go to Admin Dashboard" : "Go to Business Dashboard"}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               {/* Tournament Picks */}
               {tournamentPicks && (tournamentPicks.winner || tournamentPicks.topScorer || tournamentPicks.mvp) && (
