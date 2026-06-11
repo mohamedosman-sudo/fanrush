@@ -20,6 +20,7 @@ type DisplayVenue = {
   clicks: number
   saves: number
   bookings: number
+  rejection_reason?: string | null
 }
 
 type DisplayEvent = {
@@ -28,6 +29,7 @@ type DisplayEvent = {
   description: string
   date: string
   status: "pending" | "approved" | "rejected"
+  rejection_reason?: string | null
 }
 
 const configured = !!(
@@ -65,6 +67,53 @@ function mockFallback(): { venues: DisplayVenue[]; events: DisplayEvent[] } {
   return { venues, events }
 }
 
+function StatusBadge({ status }: { status: "pending" | "approved" | "rejected" }) {
+  const styles =
+    status === "approved"
+      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
+      : status === "pending"
+      ? "bg-yellow-400/15 text-yellow-400 border-yellow-400/20"
+      : "bg-red-500/15 text-red-400 border-red-500/20"
+  const icons = { approved: "✓", pending: "⏳", rejected: "✕" }
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${styles}`}>
+      <span>{icons[status]}</span>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  )
+}
+
+function RejectionNote({ reason }: { reason?: string | null }) {
+  if (!reason) return null
+  return (
+    <div className="mt-3 p-3 bg-red-500/8 border border-red-500/20 rounded-xl">
+      <p className="text-red-400 text-xs font-semibold mb-0.5">Rejection reason</p>
+      <p className="text-red-300 text-xs leading-relaxed">{reason}</p>
+    </div>
+  )
+}
+
+function NextActionHint({ status, editHref }: { status: "pending" | "approved" | "rejected"; editHref: string }) {
+  if (status === "pending") {
+    return (
+      <p className="text-yellow-400/70 text-xs mt-2">
+        Under review — no action needed. We&apos;ll notify you once approved.
+      </p>
+    )
+  }
+  if (status === "rejected") {
+    return (
+      <Link
+        href={editHref}
+        className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-xs transition-all touch-manipulation"
+      >
+        Edit &amp; resubmit →
+      </Link>
+    )
+  }
+  return null
+}
+
 export default function BusinessPage() {
   const showComingSoon = useComingSoon()
 
@@ -93,10 +142,9 @@ export default function BusinessPage() {
           return
         }
 
-        // Load owned venues.
         const { data: venueData, error: venueErr } = await supabase
           .from("venues")
-          .select("id, name, city_id, cities(name), address, status, featured, views, clicks, saves, bookings")
+          .select("id, name, city_id, cities(name), address, status, featured, views, clicks, saves, bookings, rejection_reason")
           .eq("owner_id", user.id)
           .order("created_at", { ascending: false })
 
@@ -120,16 +168,16 @@ export default function BusinessPage() {
           clicks: v.clicks ?? 0,
           saves: v.saves ?? 0,
           bookings: v.bookings ?? 0,
+          rejection_reason: v.rejection_reason ?? null,
         }))
 
         setVenues(mappedVenues)
 
-        // Load events for owned venues.
         if (mappedVenues.length > 0) {
           const venueIds = mappedVenues.map((v) => v.id)
           const { data: eventData, error: eventErr } = await supabase
             .from("events")
-            .select("id, title, description, event_date, status")
+            .select("id, title, description, event_date, status, rejection_reason")
             .in("venue_id", venueIds)
             .order("event_date", { ascending: true })
 
@@ -141,6 +189,7 @@ export default function BusinessPage() {
               description: e.description ?? "",
               date: e.event_date ?? "",
               status: e.status ?? "pending",
+              rejection_reason: e.rejection_reason ?? null,
             })))
           }
         }
@@ -157,6 +206,20 @@ export default function BusinessPage() {
   }, [])
 
   const primary = venues[0]
+
+  // Status breakdown
+  const venueCounts = {
+    approved: venues.filter((v) => v.status === "approved").length,
+    pending: venues.filter((v) => v.status === "pending").length,
+    rejected: venues.filter((v) => v.status === "rejected").length,
+  }
+  const eventCounts = {
+    approved: events.filter((e) => e.status === "approved").length,
+    pending: events.filter((e) => e.status === "pending").length,
+    rejected: events.filter((e) => e.status === "rejected").length,
+  }
+  const hasRejected = venueCounts.rejected > 0 || eventCounts.rejected > 0
+  const hasPending = venueCounts.pending > 0 || eventCounts.pending > 0
 
   return (
     <AppShell title="Business Portal" showBottomNav={false}>
@@ -181,19 +244,19 @@ export default function BusinessPage() {
               <div>
                 <h1 className="text-white font-black text-2xl">Business Portal</h1>
                 <p className="text-gray-400 text-sm mt-1">
-                  Welcome back{primary ? `, ${primary.name}` : ""}
+                  {primary ? `Managing ${venues.length} venue${venues.length !== 1 ? "s" : ""}` : "Manage your venues and events"}
                 </p>
               </div>
               <div className="flex gap-2">
                 <Link
                   href="/business/add-venue"
-                  className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm"
+                  className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm touch-manipulation"
                 >
                   + Add Venue
                 </Link>
                 <Link
                   href="/business/add-event"
-                  className="bg-transparent border border-white/10 hover:border-orange-500/40 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm"
+                  className="bg-transparent border border-white/10 hover:border-orange-500/40 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm touch-manipulation"
                 >
                   + Add Event
                 </Link>
@@ -208,6 +271,58 @@ export default function BusinessPage() {
               </div>
             )}
 
+            {/* Action alerts */}
+            {!loading && hasRejected && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/8 px-4 py-4 flex items-start gap-3">
+                <span className="text-red-400 text-xl flex-shrink-0">⚠</span>
+                <div>
+                  <p className="text-red-300 font-bold text-sm">Action required</p>
+                  <p className="text-red-400/80 text-xs mt-0.5">
+                    Some listings were rejected. Review the reason below and edit &amp; resubmit.
+                  </p>
+                </div>
+              </div>
+            )}
+            {!loading && !hasRejected && hasPending && (
+              <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 flex items-center gap-3">
+                <span className="text-yellow-400">⏳</span>
+                <p className="text-yellow-300 text-sm">
+                  Some listings are under review — we&apos;ll notify you once they&apos;re approved.
+                </p>
+              </div>
+            )}
+
+            {/* Status summary */}
+            {!loading && venues.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="bg-gray-900 border border-white/10 rounded-xl p-4 text-center">
+                  <p className="text-white font-black text-2xl">{venues.length}</p>
+                  <p className="text-gray-400 text-xs mt-1">Total Venues</p>
+                  <div className="flex justify-center gap-2 mt-2 flex-wrap">
+                    {venueCounts.approved > 0 && <span className="text-emerald-400 text-xs font-semibold">{venueCounts.approved} live</span>}
+                    {venueCounts.pending > 0 && <span className="text-yellow-400 text-xs font-semibold">{venueCounts.pending} pending</span>}
+                    {venueCounts.rejected > 0 && <span className="text-red-400 text-xs font-semibold">{venueCounts.rejected} rejected</span>}
+                  </div>
+                </div>
+                <div className="bg-gray-900 border border-white/10 rounded-xl p-4 text-center">
+                  <p className="text-white font-black text-2xl">{events.length}</p>
+                  <p className="text-gray-400 text-xs mt-1">Total Events</p>
+                  <div className="flex justify-center gap-2 mt-2 flex-wrap">
+                    {eventCounts.approved > 0 && <span className="text-emerald-400 text-xs font-semibold">{eventCounts.approved} live</span>}
+                    {eventCounts.pending > 0 && <span className="text-yellow-400 text-xs font-semibold">{eventCounts.pending} pending</span>}
+                    {eventCounts.rejected > 0 && <span className="text-red-400 text-xs font-semibold">{eventCounts.rejected} rejected</span>}
+                  </div>
+                </div>
+                {primary && (
+                  <div className="bg-gray-900 border border-white/10 rounded-xl p-4 text-center col-span-2 sm:col-span-1">
+                    <p className="text-white font-black text-2xl">{primary.views + primary.clicks + primary.saves}</p>
+                    <p className="text-gray-400 text-xs mt-1">Total Engagement</p>
+                    <p className="text-gray-500 text-xs mt-1">{primary.name}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Analytics Strip */}
             {!loading && primary && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -218,11 +333,11 @@ export default function BusinessPage() {
               </div>
             )}
 
-            {/* Your Listings */}
+            {/* Your Venues */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-black uppercase tracking-widest text-gray-500">Your Listings</p>
-                <Link href="/business/add-venue" className="text-orange-400 text-xs font-semibold hover:text-orange-300 transition-colors">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-500">Your Venues</p>
+                <Link href="/business/add-venue" className="text-orange-400 text-xs font-semibold hover:text-orange-300 transition-colors touch-manipulation">
                   + Add Venue
                 </Link>
               </div>
@@ -234,19 +349,32 @@ export default function BusinessPage() {
                   ))}
                 </div>
               ) : venues.length === 0 ? (
-                <div className="bg-gray-900 border border-dashed border-white/10 rounded-2xl p-8 text-center">
-                  <p className="text-gray-400 text-sm mb-3">No venues yet.</p>
+                <div className="bg-gray-900 border border-dashed border-white/20 rounded-2xl p-10 text-center">
+                  <p className="text-3xl mb-3">🏟️</p>
+                  <p className="text-white font-bold mb-1">No venues yet</p>
+                  <p className="text-gray-400 text-sm mb-4">
+                    List your first venue to appear in FanRush watch parties.
+                  </p>
                   <Link
                     href="/business/add-venue"
-                    className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm inline-block"
+                    className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-6 py-2.5 transition-all text-sm inline-block touch-manipulation"
                   >
-                    Add Your First Venue
+                    Add Your First Venue →
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {venues.map((venue) => (
-                    <div key={venue.id} className="bg-gray-900 border border-white/10 rounded-2xl p-4">
+                    <div
+                      key={venue.id}
+                      className={`bg-gray-900 border rounded-2xl p-4 ${
+                        venue.status === "rejected"
+                          ? "border-red-500/30"
+                          : venue.status === "pending"
+                          ? "border-yellow-400/20"
+                          : "border-white/10"
+                      }`}
+                    >
                       {/* Top row */}
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -256,51 +384,49 @@ export default function BusinessPage() {
                               Featured
                             </span>
                           )}
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
-                              venue.status === "approved"
-                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
-                                : venue.status === "pending"
-                                ? "bg-yellow-400/15 text-yellow-400 border-yellow-400/20"
-                                : "bg-red-500/15 text-red-400 border-red-500/20"
-                            }`}
-                          >
-                            {venue.status.charAt(0).toUpperCase() + venue.status.slice(1)}
-                          </span>
+                          <StatusBadge status={venue.status} />
                         </div>
                       </div>
 
                       <p className="text-gray-400 text-sm mb-3">{venue.city} · {venue.address}</p>
 
-                      {/* Mini analytics */}
-                      <div className="grid grid-cols-4 gap-2 mb-4">
-                        {[
-                          { label: "Views", value: venue.views },
-                          { label: "Clicks", value: venue.clicks },
-                          { label: "Saves", value: venue.saves },
-                          { label: "Bookings", value: venue.bookings },
-                        ].map((stat) => (
-                          <div key={stat.label} className="bg-gray-800/60 rounded-xl p-2.5 text-center">
-                            <p className="text-white font-bold text-sm">{stat.value}</p>
-                            <p className="text-xs font-black uppercase tracking-widest text-gray-500">{stat.label}</p>
-                          </div>
-                        ))}
-                      </div>
+                      {/* Mini analytics — only meaningful when approved */}
+                      {venue.status === "approved" && (
+                        <div className="grid grid-cols-4 gap-2 mb-4">
+                          {[
+                            { label: "Views", value: venue.views },
+                            { label: "Clicks", value: venue.clicks },
+                            { label: "Saves", value: venue.saves },
+                            { label: "Bookings", value: venue.bookings },
+                          ].map((stat) => (
+                            <div key={stat.label} className="bg-gray-800/60 rounded-xl p-2.5 text-center">
+                              <p className="text-white font-bold text-sm">{stat.value}</p>
+                              <p className="text-xs font-black uppercase tracking-widest text-gray-500">{stat.label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Rejection reason + resubmit CTA */}
+                      <RejectionNote reason={venue.rejection_reason} />
+                      <NextActionHint status={venue.status} editHref={`/business/venues/${venue.id}/edit`} />
 
                       {/* Actions */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-3">
                         <Link
                           href={`/business/venues/${venue.id}/edit`}
-                          className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all"
+                          className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
                         >
                           Edit
                         </Link>
-                        <button
-                          onClick={() => showComingSoon("Listing boost")}
-                          className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all"
-                        >
-                          Boost
-                        </button>
+                        {venue.status === "approved" && (
+                          <button
+                            onClick={() => showComingSoon("Listing boost")}
+                            className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
+                          >
+                            Boost
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -312,7 +438,7 @@ export default function BusinessPage() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-black uppercase tracking-widest text-gray-500">Your Events</p>
-                <Link href="/business/add-event" className="text-orange-400 text-xs font-semibold hover:text-orange-300 transition-colors">
+                <Link href="/business/add-event" className="text-orange-400 text-xs font-semibold hover:text-orange-300 transition-colors touch-manipulation">
                   + Add Event
                 </Link>
               </div>
@@ -320,28 +446,37 @@ export default function BusinessPage() {
               {loading ? (
                 <div className="bg-gray-900 border border-white/10 rounded-2xl p-4 animate-pulse h-20" />
               ) : events.length === 0 ? (
-                <div className="bg-gray-900 border border-dashed border-white/10 rounded-2xl p-8 text-center">
-                  <p className="text-gray-400 text-sm">No events yet.</p>
+                <div className="bg-gray-900 border border-dashed border-white/20 rounded-2xl p-10 text-center">
+                  <p className="text-3xl mb-3">📅</p>
+                  <p className="text-white font-bold mb-1">No events yet</p>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Create your first event for matchday fans.
+                  </p>
+                  <Link
+                    href="/business/add-event"
+                    className="border border-white/20 hover:border-orange-500/40 text-white font-bold rounded-xl px-6 py-2.5 transition-all text-sm inline-block touch-manipulation"
+                  >
+                    Add Your First Event →
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {events.map((event) => (
-                    <div key={event.id} className="bg-gray-900 border border-white/10 rounded-2xl p-4">
+                    <div
+                      key={event.id}
+                      className={`bg-gray-900 border rounded-2xl p-4 ${
+                        event.status === "rejected"
+                          ? "border-red-500/30"
+                          : event.status === "pending"
+                          ? "border-yellow-400/20"
+                          : "border-white/10"
+                      }`}
+                    >
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <h3 className="text-white font-bold">{event.name}</h3>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
-                                event.status === "approved"
-                                  ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
-                                  : event.status === "pending"
-                                  ? "bg-yellow-400/15 text-yellow-400 border-yellow-400/20"
-                                  : "bg-red-500/15 text-red-400 border-red-500/20"
-                              }`}
-                            >
-                              {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                            </span>
+                            <StatusBadge status={event.status} />
                           </div>
                           <p className="text-gray-400 text-sm">{event.description}</p>
                           {event.date && (
@@ -359,11 +494,13 @@ export default function BusinessPage() {
                         </div>
                       </div>
 
-                      {/* Actions */}
+                      <RejectionNote reason={event.rejection_reason} />
+                      <NextActionHint status={event.status} editHref={`/business/events/${event.id}/edit`} />
+
                       <div className="flex gap-2 mt-3">
                         <Link
                           href={`/business/events/${event.id}/edit`}
-                          className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all"
+                          className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
                         >
                           Edit
                         </Link>
@@ -384,7 +521,7 @@ export default function BusinessPage() {
               </div>
               <Link
                 href="/pricing"
-                className="flex-shrink-0 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm"
+                className="flex-shrink-0 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-5 py-2.5 transition-all text-sm touch-manipulation"
               >
                 See Pricing →
               </Link>

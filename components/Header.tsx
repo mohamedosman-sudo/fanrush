@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ReactNode } from "react"
 import AuthNav from "./AuthNav"
+import { useIsLoggedIn } from "@/lib/hooks/useIsLoggedIn"
 
 interface HeaderProps {
   title?: string
@@ -14,6 +15,9 @@ interface HeaderProps {
 
 export default function Header({ title, showBack, rightElement }: HeaderProps) {
   const router = useRouter()
+  const loginStatus = useIsLoggedIn()
+  // Logged-out users on preview pages should return to the landing page, not /home.
+  const logoHref = loginStatus === "no" ? "/" : "/home"
 
   function handleBack() {
     if (window.history.length > 1) {
@@ -41,14 +45,14 @@ export default function Header({ title, showBack, rightElement }: HeaderProps) {
         {title ? (
           /* Sub-page: show ⚡ brand mark + page title side-by-side */
           <div className="flex items-center gap-2 min-w-0">
-            <Link href="/home" aria-label="FanRush home" className="flex-shrink-0">
+            <Link href={logoHref} aria-label="FanRush home" className="flex-shrink-0">
               <span className="text-orange-500 text-lg leading-none">⚡</span>
             </Link>
             <h1 className="text-white font-bold text-base tracking-tight truncate">{title}</h1>
           </div>
         ) : (
           /* Home / no title: full brand wordmark */
-          <Link href="/home" className="flex items-center gap-1">
+          <Link href={logoHref} className="flex items-center gap-1">
             <span className="text-orange-500 text-lg leading-none">⚡</span>
             <span className="text-orange-500 font-black text-xl tracking-tight">Fan</span>
             <span className="text-white font-black text-xl tracking-tight">Rush</span>

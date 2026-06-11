@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useIsLoggedIn } from "@/lib/hooks/useIsLoggedIn"
 
 const navItems = [
   {
@@ -60,6 +61,11 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const loginStatus = useIsLoggedIn()
+
+  // Hide during auth check and when confirmed logged out.
+  // Demo mode (Supabase not configured) always shows the nav.
+  if (loginStatus !== "yes") return null
 
   return (
     <nav
