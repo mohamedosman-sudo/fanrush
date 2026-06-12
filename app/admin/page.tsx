@@ -85,13 +85,13 @@ export default function AdminDashboardPage() {
           { label: "Events", href: "/admin/events" },
           { label: "Matches", href: "/admin/matches" },
           { label: "Sponsors", href: "/admin/sponsors" },
-          { label: "Cities", href: "/admin/cities" },
+          { label: "Launch", href: "/admin/launch" },
         ]}
       />
       <div className="flex min-h-screen bg-[#0a0a0f]">
         <AdminSidebar />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+          <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
 
             {/* Header */}
             <div>

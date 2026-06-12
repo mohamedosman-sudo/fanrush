@@ -9,6 +9,8 @@ import { mockVenues, mockEvents } from "@/lib/mock-data"
 import MobileAdminNav from "@/components/MobileAdminNav"
 import { useComingSoon } from "@/components/useComingSoon"
 
+type LoadMode = "loading" | "live" | "empty" | "preview" | "error"
+
 type DisplayVenue = {
   id: string
   name: string
@@ -117,14 +119,9 @@ function NextActionHint({ status, editHref }: { status: "pending" | "approved" |
 export default function BusinessPage() {
   const showComingSoon = useComingSoon()
 
-  const [venues, setVenues] = useState<DisplayVenue[]>(() =>
-    configured ? [] : mockFallback().venues
-  )
-  const [events, setEvents] = useState<DisplayEvent[]>(() =>
-    configured ? [] : mockFallback().events
-  )
-  const [loading, setLoading] = useState(configured)
-  const [usingDemo, setUsingDemo] = useState(!configured)
+  const [venues, setVenues] = useState<DisplayVenue[]>([])
+  const [events, setEvents] = useState<DisplayEvent[]>([])
+  const [loadMode, setLoadMode] = useState<LoadMode>(configured ? "loading" : "preview")
 
   useEffect(() => {
     if (!configured) return
@@ -134,25 +131,41 @@ export default function BusinessPage() {
         const { createClient } = await import("@/lib/supabase/client")
         const supabase = createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        const { data: { user }, error: authErr } = await supabase.auth.getUser()
+        if (authErr || !user) {
+          setLoadMode("preview")
           const { venues: v, events: ev } = mockFallback()
-          setVenues(v); setEvents(ev); setUsingDemo(true)
-          setLoading(false)
+          setVenues(v); setEvents(ev)
           return
         }
 
-        const { data: venueData, error: venueErr } = await supabase
+        // First try with city join; fall back to plain city_id if relation missing.
+        let venueData: unknown[] | null = null
+        let venueErr: { message: string } | null = null
+
+        const withJoin = await supabase
           .from("venues")
           .select("id, name, city_id, cities(name), address, status, featured, views, clicks, saves, bookings, rejection_reason")
           .eq("owner_id", user.id)
           .order("created_at", { ascending: false })
 
+        if (withJoin.error) {
+          // Retry without the city join in case the FK alias differs.
+          const plain = await supabase
+            .from("venues")
+            .select("id, name, city_id, address, status, featured, views, clicks, saves, bookings, rejection_reason")
+            .eq("owner_id", user.id)
+            .order("created_at", { ascending: false })
+          venueData = plain.data ?? null
+          venueErr = plain.error
+        } else {
+          venueData = withJoin.data ?? null
+          venueErr = withJoin.error
+        }
+
         if (venueErr || !venueData) {
           console.warn("[business/page] venues error", venueErr)
-          const { venues: v, events: ev } = mockFallback()
-          setVenues(v); setEvents(ev); setUsingDemo(true)
-          setLoading(false)
+          setLoadMode("error")
           return
         }
 
@@ -160,7 +173,8 @@ export default function BusinessPage() {
         const mappedVenues: DisplayVenue[] = (venueData as any[]).map((v) => ({
           id: v.id,
           name: v.name,
-          city: v.cities?.name ?? v.city_id ?? "—",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          city: (v.cities as any)?.name ?? v.city_id ?? "—",
           address: v.address ?? "—",
           status: v.status ?? "pending",
           featured: v.featured ?? false,
@@ -193,30 +207,37 @@ export default function BusinessPage() {
             })))
           }
         }
+
+        setLoadMode(mappedVenues.length === 0 ? "empty" : "live")
       } catch (err) {
         console.error("[business/page] unexpected error", err)
-        const { venues: v, events: ev } = mockFallback()
-        setVenues(v); setEvents(ev); setUsingDemo(true)
-      } finally {
-        setLoading(false)
+        setLoadMode("error")
       }
     }
 
     loadData()
   }, [])
 
-  const primary = venues[0]
+  const loading = loadMode === "loading"
+  const usingPreview = loadMode === "preview"
+  const hasError = loadMode === "error"
+
+  // When in preview mode, use mock data for display only
+  const displayVenues = usingPreview ? mockFallback().venues : venues
+  const displayEvents = usingPreview ? mockFallback().events : events
+
+  const primary = displayVenues[0]
 
   // Status breakdown
   const venueCounts = {
-    approved: venues.filter((v) => v.status === "approved").length,
-    pending: venues.filter((v) => v.status === "pending").length,
-    rejected: venues.filter((v) => v.status === "rejected").length,
+    approved: displayVenues.filter((v) => v.status === "approved").length,
+    pending: displayVenues.filter((v) => v.status === "pending").length,
+    rejected: displayVenues.filter((v) => v.status === "rejected").length,
   }
   const eventCounts = {
-    approved: events.filter((e) => e.status === "approved").length,
-    pending: events.filter((e) => e.status === "pending").length,
-    rejected: events.filter((e) => e.status === "rejected").length,
+    approved: displayEvents.filter((e) => e.status === "approved").length,
+    pending: displayEvents.filter((e) => e.status === "pending").length,
+    rejected: displayEvents.filter((e) => e.status === "rejected").length,
   }
   const hasRejected = venueCounts.rejected > 0 || eventCounts.rejected > 0
   const hasPending = venueCounts.pending > 0 || eventCounts.pending > 0
@@ -237,7 +258,7 @@ export default function BusinessPage() {
         </div>
 
         <main className="flex-1">
-          <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+          <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
 
             {/* Header */}
             <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -263,10 +284,18 @@ export default function BusinessPage() {
               </div>
             </div>
 
-            {usingDemo && (
+            {usingPreview && (
               <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
                 <p className="text-yellow-300 text-sm font-semibold">
-                  Preview mode — connect Supabase and log in as a business user to see your live listings.
+                  Preview mode — example data shown. Connect Supabase and log in as a business user to manage live listings.
+                </p>
+              </div>
+            )}
+
+            {hasError && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-3">
+                <p className="text-red-300 text-sm font-semibold">
+                  Unable to load your listings. Check your connection and try refreshing.
                 </p>
               </div>
             )}
@@ -293,10 +322,10 @@ export default function BusinessPage() {
             )}
 
             {/* Status summary */}
-            {!loading && venues.length > 0 && (
+            {!loading && displayVenues.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div className="bg-gray-900 border border-white/10 rounded-xl p-4 text-center">
-                  <p className="text-white font-black text-2xl">{venues.length}</p>
+                  <p className="text-white font-black text-2xl">{displayVenues.length}</p>
                   <p className="text-gray-400 text-xs mt-1">Total Venues</p>
                   <div className="flex justify-center gap-2 mt-2 flex-wrap">
                     {venueCounts.approved > 0 && <span className="text-emerald-400 text-xs font-semibold">{venueCounts.approved} live</span>}
@@ -305,7 +334,7 @@ export default function BusinessPage() {
                   </div>
                 </div>
                 <div className="bg-gray-900 border border-white/10 rounded-xl p-4 text-center">
-                  <p className="text-white font-black text-2xl">{events.length}</p>
+                  <p className="text-white font-black text-2xl">{displayEvents.length}</p>
                   <p className="text-gray-400 text-xs mt-1">Total Events</p>
                   <div className="flex justify-center gap-2 mt-2 flex-wrap">
                     {eventCounts.approved > 0 && <span className="text-emerald-400 text-xs font-semibold">{eventCounts.approved} live</span>}
@@ -324,12 +353,29 @@ export default function BusinessPage() {
             )}
 
             {/* Analytics Strip */}
-            {!loading && primary && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard label="Views" value={primary.views.toLocaleString("en-US")} icon="👁️" color="blue" />
-                <StatCard label="Clicks" value={primary.clicks.toLocaleString("en-US")} icon="🖱️" color="green" />
-                <StatCard label="Saves" value={primary.saves.toLocaleString("en-US")} icon="🔖" color="yellow" />
-                <StatCard label="Bookings" value={primary.bookings.toLocaleString("en-US")} icon="🎟️" color="red" />
+            {!loading && primary && primary.status === "approved" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black uppercase tracking-widest text-gray-500">
+                    {primary.name} — Analytics
+                  </p>
+                  {usingPreview && (
+                    <span className="text-xs text-yellow-400 font-semibold bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded-full">
+                      Example data
+                    </span>
+                  )}
+                  {!usingPreview && (primary.views + primary.clicks + primary.saves + primary.bookings === 0) && (
+                    <span className="text-xs text-gray-500 font-medium">
+                      Activity will appear once fans engage with your venue
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <StatCard label="Views" value={primary.views.toLocaleString("en-US")} icon="👁️" color="blue" />
+                  <StatCard label="Clicks" value={primary.clicks.toLocaleString("en-US")} icon="🖱️" color="green" />
+                  <StatCard label="Saves" value={primary.saves.toLocaleString("en-US")} icon="🔖" color="yellow" />
+                  <StatCard label="Bookings" value={primary.bookings.toLocaleString("en-US")} icon="🎟️" color="red" />
+                </div>
               </div>
             )}
 
@@ -348,7 +394,7 @@ export default function BusinessPage() {
                     <div key={i} className="bg-gray-900 border border-white/10 rounded-2xl p-4 animate-pulse h-28" />
                   ))}
                 </div>
-              ) : venues.length === 0 ? (
+              ) : !usingPreview && displayVenues.length === 0 ? (
                 <div className="bg-gray-900 border border-dashed border-white/20 rounded-2xl p-10 text-center">
                   <p className="text-3xl mb-3">🏟️</p>
                   <p className="text-white font-bold mb-1">No venues yet</p>
@@ -364,7 +410,7 @@ export default function BusinessPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {venues.map((venue) => (
+                  {displayVenues.map((venue) => (
                     <div
                       key={venue.id}
                       className={`bg-gray-900 border rounded-2xl p-4 ${
@@ -385,13 +431,18 @@ export default function BusinessPage() {
                             </span>
                           )}
                           <StatusBadge status={venue.status} />
+                          {usingPreview && (
+                            <span className="px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-500 text-xs border border-yellow-400/20">
+                              Preview only
+                            </span>
+                          )}
                         </div>
                       </div>
 
                       <p className="text-gray-400 text-sm mb-3">{venue.city} · {venue.address}</p>
 
-                      {/* Mini analytics — only meaningful when approved */}
-                      {venue.status === "approved" && (
+                      {/* Mini analytics — only meaningful when approved and live */}
+                      {venue.status === "approved" && !usingPreview && (
                         <div className="grid grid-cols-4 gap-2 mb-4">
                           {[
                             { label: "Views", value: venue.views },
@@ -407,27 +458,33 @@ export default function BusinessPage() {
                         </div>
                       )}
 
-                      {/* Rejection reason + resubmit CTA */}
-                      <RejectionNote reason={venue.rejection_reason} />
-                      <NextActionHint status={venue.status} editHref={`/business/venues/${venue.id}/edit`} />
+                      {/* Rejection reason + resubmit CTA — only for live data */}
+                      {!usingPreview && (
+                        <>
+                          <RejectionNote reason={venue.rejection_reason} />
+                          <NextActionHint status={venue.status} editHref={`/business/venues/${venue.id}/edit`} />
+                        </>
+                      )}
 
-                      {/* Actions */}
-                      <div className="flex gap-2 mt-3">
-                        <Link
-                          href={`/business/venues/${venue.id}/edit`}
-                          className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
-                        >
-                          Edit
-                        </Link>
-                        {venue.status === "approved" && (
-                          <button
-                            onClick={() => showComingSoon("Listing boost")}
-                            className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
+                      {/* Actions — Edit only available for live owned resources */}
+                      {!usingPreview && (
+                        <div className="flex gap-2 mt-3">
+                          <Link
+                            href={`/business/venues/${venue.id}/edit`}
+                            className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
                           >
-                            Boost
-                          </button>
-                        )}
-                      </div>
+                            Edit
+                          </Link>
+                          {venue.status === "approved" && (
+                            <button
+                              onClick={() => showComingSoon("Listing boost")}
+                              className="bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
+                            >
+                              Boost
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -445,7 +502,7 @@ export default function BusinessPage() {
 
               {loading ? (
                 <div className="bg-gray-900 border border-white/10 rounded-2xl p-4 animate-pulse h-20" />
-              ) : events.length === 0 ? (
+              ) : !usingPreview && displayEvents.length === 0 ? (
                 <div className="bg-gray-900 border border-dashed border-white/20 rounded-2xl p-10 text-center">
                   <p className="text-3xl mb-3">📅</p>
                   <p className="text-white font-bold mb-1">No events yet</p>
@@ -461,7 +518,7 @@ export default function BusinessPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {events.map((event) => (
+                  {displayEvents.map((event) => (
                     <div
                       key={event.id}
                       className={`bg-gray-900 border rounded-2xl p-4 ${
@@ -477,6 +534,11 @@ export default function BusinessPage() {
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <h3 className="text-white font-bold">{event.name}</h3>
                             <StatusBadge status={event.status} />
+                            {usingPreview && (
+                              <span className="px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-500 text-xs border border-yellow-400/20">
+                                Preview only
+                              </span>
+                            )}
                           </div>
                           <p className="text-gray-400 text-sm">{event.description}</p>
                           {event.date && (
@@ -494,17 +556,20 @@ export default function BusinessPage() {
                         </div>
                       </div>
 
-                      <RejectionNote reason={event.rejection_reason} />
-                      <NextActionHint status={event.status} editHref={`/business/events/${event.id}/edit`} />
-
-                      <div className="flex gap-2 mt-3">
-                        <Link
-                          href={`/business/events/${event.id}/edit`}
-                          className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
-                        >
-                          Edit
-                        </Link>
-                      </div>
+                      {!usingPreview && (
+                        <>
+                          <RejectionNote reason={event.rejection_reason} />
+                          <NextActionHint status={event.status} editHref={`/business/events/${event.id}/edit`} />
+                          <div className="flex gap-2 mt-3">
+                            <Link
+                              href={`/business/events/${event.id}/edit`}
+                              className="border border-white/10 hover:border-white/20 text-white font-bold rounded-xl px-4 py-2 text-xs transition-all touch-manipulation"
+                            >
+                              Edit
+                            </Link>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

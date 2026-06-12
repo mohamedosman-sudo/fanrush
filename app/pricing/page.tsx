@@ -47,7 +47,7 @@ export default function PricingPage() {
 
   return (
     <AppShell title="Pricing" showBottomNav={false}>
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-12">
+      <div className="max-w-4xl mx-auto px-4 py-8 pb-[calc(3rem+env(safe-area-inset-bottom))] space-y-12">
 
         {/* HERO */}
         <section className="text-center space-y-3">

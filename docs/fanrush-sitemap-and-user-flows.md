@@ -1,6 +1,6 @@
 # FanRush — Sitemap, User Flows & Role-Based Navigation Blueprint
 
-_Last updated: 2026-06-11_
+_Last updated: 2026-06-12_
 
 ---
 
@@ -428,6 +428,29 @@ Rejected listing card:
 - [ ] Empty venues state has Add Venue CTA
 - [ ] Empty events state has Add Event CTA
 - [ ] Action required alert shown when any listing is rejected
+
+### Business data integrity rules (enforced in code)
+- Business dashboard must **never** mix mock/editable data with live business accounts.
+- When Supabase is configured and user is logged in as `business`, fetch venues/events by `owner_id = user.id`. Do not show mock listings.
+- If the business user has no venues/events in the DB, show empty states (not mock data).
+- If the Supabase query fails (e.g. join error), retry without the join. If still failing, show an error banner — do **not** silently fall back to mock data.
+- Analytics (views/clicks/saves/bookings) are only shown per-venue when that venue is `approved`. If the page is in preview mode, label the analytics as "Example data".
+- Edit buttons only appear for live owned resources (`!usingPreview` guard). Preview/mock listings show "Preview only" tag and no edit actions.
+- `/business/venues/[id]/edit` requires `owner_id = user.id` (belt-and-suspenders on top of RLS). Non-matching IDs show "Venue not found" with a "Back to Portal" link.
+- Preview mode (Supabase not configured or user not logged in) shows example data clearly labelled and with no edit routes.
+
+### Admin navigation rules (enforced in code)
+- `MobileAdminNav` is rendered on **every** admin page: `/admin`, `/admin/venues`, `/admin/events`, `/admin/matches`, `/admin/sponsors`, `/admin/launch`.
+- Admin users can jump directly between any admin section without returning to the dashboard.
+- Mobile nav tabs: Dashboard | Venues | Events | Matches | Sponsors | Launch.
+- `MobileAdminNav` is sticky below the top header, uses backdrop-blur, horizontal scroll, right-edge fade, 44px touch targets, and `touch-manipulation`.
+- Active tab is highlighted using exact match for root (`/admin`) and `startsWith` for sub-routes.
+- All admin pages must include `pb-[calc(2rem+env(safe-area-inset-bottom))]` or equivalent on the main content wrapper.
+
+### Safe-area padding
+- Safari/iOS PWA bottom bar must not cover lower content.
+- Required on: `/pricing`, `/business`, all `/admin/*` pages.
+- Use `pb-[calc(Xrem+env(safe-area-inset-bottom))]` on the outermost scrollable content div.
 
 ### Auth / access
 - [ ] Logged-out user cannot access `/admin` (redirected to `/unauthorized` or `/login`)

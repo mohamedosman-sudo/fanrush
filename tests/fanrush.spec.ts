@@ -719,3 +719,185 @@ test.describe("Admin launch readiness page", () => {
     await expect(page.locator("body")).not.toContainText("Application error")
   })
 })
+
+// ─── Business portal data integrity ──────────────────────────────────────────
+
+test.describe("Business portal — data integrity", () => {
+  test("business page does not show 'Demo data' banner text", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    expect(src).not.toMatch(/Demo data.*connect Supabase/i)
+    expect(src).not.toMatch(/connect Supabase and log in as a business user to see your live/i)
+  })
+
+  test("business page uses loadMode state with preview/error/live/empty/loading", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("usingPreview")
+    expect(src).toContain("Preview mode")
+    expect(src).toContain("loadMode")
+  })
+
+  test("business page never shows Edit links in preview mode", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("!usingPreview")
+    // Edit links must be gated
+    const editLinkIdx = src.indexOf('href={`/business/venues/${venue.id}/edit`}')
+    const previewGuardIdx = src.lastIndexOf("!usingPreview", editLinkIdx)
+    expect(previewGuardIdx).toBeGreaterThan(-1)
+  })
+
+  test("business page shows 'Preview only' tag on mock venue/event cards", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("Preview only")
+  })
+
+  test("business page labels analytics as example data in preview mode", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("Example data")
+  })
+
+  test("business page shows error state on Supabase fetch failure (not demo fallback)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('setLoadMode("error")')
+    expect(src).toContain("hasError")
+    expect(src).toContain("Unable to load your listings")
+  })
+
+  test("business venue edit route has owner_id check and not-found state", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('.eq("owner_id", user.id)')
+    expect(src).toContain("not-found")
+    expect(src).toContain("This venue does not exist or you do not have permission")
+  })
+
+  test("business page retries venue query without cities join on error", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("withJoin.error")
+    expect(src).toContain("city_id, address, status")
+  })
+})
+
+// ─── Admin mobile nav — all pages ────────────────────────────────────────────
+
+test.describe("Admin mobile nav — all pages", () => {
+  const adminPages = [
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/venues/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/events/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/matches/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/sponsors/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/launch/page.tsx",
+  ]
+
+  for (const pagePath of adminPages) {
+    const label = pagePath.replace("/Users/mohamed/Desktop/Projects/fanrush/app", "")
+    test(`${label} imports and renders MobileAdminNav`, async () => {
+      const src = fs.readFileSync(pagePath, "utf-8")
+      expect(src).toContain("MobileAdminNav")
+    })
+  }
+
+  test("all admin pages include Launch link in mobile nav", async () => {
+    for (const pagePath of adminPages) {
+      const src = fs.readFileSync(pagePath, "utf-8")
+      expect(src).toContain('"/admin/launch"')
+    }
+  })
+
+  test("admin dashboard mobile nav includes Launch, not Cities as a tab", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"/admin/launch"')
+    const mobileNavSection = src.match(/MobileAdminNav[\s\S]{0,600}/)?.[0] ?? ""
+    expect(mobileNavSection).not.toContain('"/admin/cities"')
+  })
+
+  test("MobileAdminNav is sticky with backdrop-blur and scroll fade", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/MobileAdminNav.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("sticky")
+    expect(src).toContain("backdrop-blur")
+    expect(src).toContain("bg-gradient-to-l")
+  })
+
+  test("MobileAdminNav links have 44px min-height touch targets", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/MobileAdminNav.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("min-h-[44px]")
+    expect(src).toContain("touch-manipulation")
+  })
+
+  test("MobileAdminNav active state matches sub-routes via startsWith", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/MobileAdminNav.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("startsWith")
+  })
+})
+
+// ─── Safe-area padding ────────────────────────────────────────────────────────
+
+test.describe("Safe-area bottom padding", () => {
+  const safeAreaPages = [
+    "/Users/mohamed/Desktop/Projects/fanrush/app/pricing/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/launch/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/venues/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/events/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/matches/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/admin/sponsors/page.tsx",
+  ]
+
+  for (const pagePath of safeAreaPages) {
+    const label = pagePath.replace("/Users/mohamed/Desktop/Projects/fanrush/app", "")
+    test(`${label} has safe-area bottom padding`, async () => {
+      const src = fs.readFileSync(pagePath, "utf-8")
+      expect(src).toMatch(/safe-area-inset-bottom/)
+    })
+  }
+})
+
+// ─── Watch Parties — default filter check ────────────────────────────────────
+
+test.describe("Watch Parties — filter defaults", () => {
+  test("WatchPartiesClient does not default to a specific city or team", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/watch-parties/WatchPartiesClient.tsx",
+      "utf-8"
+    )
+    expect(src).not.toMatch(/useState\(["']london["']\)/i)
+    expect(src).not.toMatch(/useState\(["']manchester["']\)/i)
+    expect(src).not.toMatch(/useState\(["']england["']\)/i)
+  })
+})

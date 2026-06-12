@@ -3,7 +3,17 @@
 import { useState, useEffect, useCallback } from "react"
 import AppShell from "@/components/AppShell"
 import AdminSidebar from "@/components/AdminSidebar"
+import MobileAdminNav from "@/components/MobileAdminNav"
 import { SponsorSlot } from "@/lib/types"
+
+const ADMIN_LINKS = [
+  { label: "Dashboard", href: "/admin" },
+  { label: "Venues", href: "/admin/venues" },
+  { label: "Events", href: "/admin/events" },
+  { label: "Matches", href: "/admin/matches" },
+  { label: "Sponsors", href: "/admin/sponsors" },
+  { label: "Launch", href: "/admin/launch" },
+]
 
 const configured = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -265,10 +275,11 @@ export default function AdminSponsorsPage() {
 
   return (
     <AppShell showBottomNav={false} title="Admin - Sponsors">
+      <MobileAdminNav title="Admin" links={ADMIN_LINKS} />
       <div className="flex min-h-screen bg-[#0a0a0f]">
         <AdminSidebar />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+          <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
 
             {/* ── Header ──────────────────────────────────────────────── */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
