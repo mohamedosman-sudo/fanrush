@@ -5,122 +5,93 @@
   --foreground: #f9fafb;
 }
 
-/* ── FanRush Wave Background ──────────────────────────────────────────────────
- *
- * Layering strategy
- * -----------------
- * html   → background: #030712  (dark base, always visible)
- * body   → background: transparent (lets html base show through)
- * .fanrush-wave-bg  → position: fixed; z-index: -1
- *     Sits above html background but below all body content.
- *     Children are two animated wave ribbons (::before, ::after) plus a
- *     crowd silhouette div.
- * ────────────────────────────────────────────────────────────────────────── */
+/* ── FanRush Global Background ───────────────────────────────────────────────
+ * One fixed layer. Route-aware via data-mode attribute.
+ * z-index: 0. Page content sits in relative z-10 wrapper in layout.tsx.
+ * ─────────────────────────────────────────────────────────────────────────── */
 
-/* Fallback dark colour — wave provides its own gradient but this prevents
-   any flash on slow paints */
 html {
-  background-color: #060810;
+  background-color: #07080f;
 }
 
-.fanrush-wave-bg {
+.fanrush-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  transition: background 0.4s ease;
+}
 
-  /* Dark base + radial glows — stadium-lights / orange sunset top-right,
-     cool blue bottom-left, faint amber top-left corner */
+/* PUBLIC — visible but premium */
+.fanrush-bg[data-mode="public"] {
   background:
-    radial-gradient(circle at 78% 4%,   rgba(249, 115,  22, 0.28) 0%, transparent 32rem),
-    radial-gradient(circle at 22% 96%,  rgba( 59, 130, 246, 0.20) 0%, transparent 28rem),
-    radial-gradient(circle at 12% 3%,   rgba(251, 191,  36, 0.14) 0%, transparent 22rem),
-    radial-gradient(circle at 50% 50%,  rgba(249, 115,  22, 0.08) 0%, transparent 40rem),
-    linear-gradient(180deg, #0d0f1a 0%, #060810 100%);
+    radial-gradient(circle at 72% 8%,  rgba(249,115,22,0.14) 0%, transparent 28rem),
+    radial-gradient(circle at 20% 90%, rgba(59,130,246,0.08) 0%, transparent 24rem),
+    linear-gradient(180deg, #0a0b14 0%, #060710 100%);
 }
 
-/* Wave ribbon 1 — warm orange sweep */
-.fanrush-wave-bg::before {
-  content: "";
-  position: absolute;
-  inset: -25% -15%;
-  background: linear-gradient(
-    162deg,
-    transparent            28%,
-    rgba(249,115,22, 0.18) 43%,
-    rgba(251,146,60, 0.13) 50%,
-    rgba(249,115,22, 0.18) 57%,
-    transparent            70%
-  );
-  animation: fanrush-wave-drift 24s ease-in-out infinite alternate;
-  will-change: transform;
+/* FAN — subtle */
+.fanrush-bg[data-mode="fan"] {
+  background:
+    radial-gradient(circle at 70% 10%,  rgba(249,115,22,0.09) 0%, transparent 26rem),
+    radial-gradient(circle at 18% 88%,  rgba(59,130,246,0.07) 0%, transparent 22rem),
+    linear-gradient(180deg, #09090f 0%, #060710 100%);
 }
 
-/* Wave ribbon 2 — cool blue counter-sweep */
-.fanrush-wave-bg::after {
-  content: "";
-  position: absolute;
-  inset: -25% -15%;
-  background: linear-gradient(
-    18deg,
-    transparent            22%,
-    rgba(59,130,246, 0.13) 38%,
-    rgba(96,165,250, 0.10) 50%,
-    rgba(59,130,246, 0.13) 62%,
-    transparent            74%
-  );
-  animation: fanrush-wave-drift2 30s ease-in-out infinite alternate;
-  will-change: transform;
+/* BUSINESS — very subtle, serious dashboard */
+.fanrush-bg[data-mode="business"] {
+  background:
+    radial-gradient(circle at 80% 5%,  rgba(249,115,22,0.035) 0%, transparent 24rem),
+    radial-gradient(circle at 10% 95%, rgba(59,130,246,0.045) 0%, transparent 20rem),
+    linear-gradient(180deg, #08090e 0%, #050609 100%);
 }
 
-/* Crowd silhouette — warm ambient glow pooling at the bottom third */
-.fanrush-wave-crowd {
+/* ADMIN — barely visible, console feel */
+.fanrush-bg[data-mode="admin"] {
+  background:
+    radial-gradient(circle at 85% 4%,  rgba(249,115,22,0.02)  0%, transparent 20rem),
+    radial-gradient(circle at 8%  96%, rgba(59,130,246,0.035) 0%, transparent 18rem),
+    linear-gradient(180deg, #070810 0%, #040508 100%);
+}
+
+/* Crowd glow — only on public and fan */
+.fanrush-bg[data-mode="public"] .fanrush-bg-crowd,
+.fanrush-bg[data-mode="fan"] .fanrush-bg-crowd {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 42%;
+  height: 35%;
   background:
-    radial-gradient(ellipse 130% 65% at  28% 100%, rgba(249,115,22,0.14) 0%, transparent 70%),
-    radial-gradient(ellipse 130% 65% at  72% 100%, rgba(251,191,36,0.10) 0%, transparent 70%),
-    linear-gradient(to top, rgba(249,115,22,0.09) 0%, transparent 100%);
+    radial-gradient(ellipse 120% 60% at 30% 100%, rgba(249,115,22,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 120% 60% at 70% 100%, rgba(251,191,36,0.05) 0%, transparent 70%);
 }
 
-/* ── Keyframes ─────────────────────────────────────────────────────────────── */
-
-@keyframes fanrush-wave-drift {
-  0%   { transform: translateX(-12%) translateY(4%); }
-  100% { transform: translateX( 12%) translateY(-4%); }
+/* No crowd glow on business/admin */
+.fanrush-bg[data-mode="business"] .fanrush-bg-crowd,
+.fanrush-bg[data-mode="admin"] .fanrush-bg-crowd {
+  display: none;
 }
 
-@keyframes fanrush-wave-drift2 {
-  0%   { transform: translateX( 9%) translateY(-5%); }
-  100% { transform: translateX(-9%) translateY( 5%); }
+/* Mobile — reduce all glows */
+@media (max-width: 767px) {
+  .fanrush-bg[data-mode="public"] {
+    background:
+      radial-gradient(circle at 72% 8%,  rgba(249,115,22,0.10) 0%, transparent 18rem),
+      radial-gradient(circle at 20% 90%, rgba(59,130,246,0.06) 0%, transparent 14rem),
+      linear-gradient(180deg, #0a0b14 0%, #060710 100%);
+  }
+  .fanrush-bg[data-mode="fan"] {
+    background:
+      radial-gradient(circle at 70% 10%, rgba(249,115,22,0.07) 0%, transparent 16rem),
+      radial-gradient(circle at 18% 88%, rgba(59,130,246,0.05) 0%, transparent 12rem),
+      linear-gradient(180deg, #09090f 0%, #060710 100%);
+  }
 }
-
-/* ── Reduced motion ────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .fanrush-wave-bg::before,
-  .fanrush-wave-bg::after {
-    animation: none;
-  }
-}
-
-/* ── Mobile — subtler glows, half-opacity waves ────────────────────────────── */
-
-@media (max-width: 767px) {
-  .fanrush-wave-bg {
-    background:
-      radial-gradient(circle at 78% 4%,   rgba(249,115, 22, 0.18) 0%, transparent 22rem),
-      radial-gradient(circle at 22% 96%,  rgba( 59,130,246, 0.14) 0%, transparent 18rem),
-      radial-gradient(circle at 12% 3%,   rgba(251,191, 36, 0.09) 0%, transparent 14rem),
-      linear-gradient(180deg, #0d0f1a 0%, #060810 100%);
-  }
-  .fanrush-wave-bg::before { opacity: 0.55; }
-  .fanrush-wave-bg::after  { opacity: 0.50; }
-  .fanrush-wave-crowd      { opacity: 0.65; }
+  .fanrush-bg { transition: none; }
 }
 
 @theme inline {

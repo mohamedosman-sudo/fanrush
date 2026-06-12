@@ -440,12 +440,18 @@ test.describe("Navigation mode — source code checks", () => {
 test.describe("Navigation mode — structural checks", () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test("admin pages do not show bottom fan nav (source check)", async () => {
+  test("admin pages do not show bottom fan nav (source check via AdminShell)", async () => {
     const adminPageSrc = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
       "utf-8"
     )
-    expect(adminPageSrc).toMatch(/showBottomNav.*false|AppShell[^>]*showBottomNav={false}/)
+    // Admin pages now delegate to AdminShell, which enforces showBottomNav={false}
+    expect(adminPageSrc).toContain("AdminShell")
+    const shellSrc = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AdminShell.tsx",
+      "utf-8"
+    )
+    expect(shellSrc).toContain("showBottomNav={false}")
   })
 
   test("business page uses BusinessShell which enforces showBottomNav={false}", async () => {
@@ -827,27 +833,34 @@ test.describe("Admin mobile nav — all pages", () => {
 
   for (const pagePath of adminPages) {
     const label = pagePath.replace("/Users/mohamed/Desktop/Projects/fanrush/app", "")
-    test(`${label} imports and renders MobileAdminNav`, async () => {
+    test(`${label} imports and renders AdminShell (which contains MobileAdminNav)`, async () => {
       const src = fs.readFileSync(pagePath, "utf-8")
-      expect(src).toContain("MobileAdminNav")
+      expect(src).toContain("AdminShell")
     })
   }
 
-  test("all admin pages include Launch link in mobile nav", async () => {
-    for (const pagePath of adminPages) {
-      const src = fs.readFileSync(pagePath, "utf-8")
-      expect(src).toContain('"/admin/launch"')
-    }
-  })
-
-  test("admin dashboard mobile nav includes Launch, not Cities as a tab", async () => {
-    const src = fs.readFileSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
+  test("all admin pages include Launch link via ADMIN_NAV_LINKS (in AdminShell)", async () => {
+    // Admin pages now use AdminShell which reads from ADMIN_NAV_LINKS
+    const navLinksSrc = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/lib/admin-nav-links.ts",
       "utf-8"
     )
-    expect(src).toContain('"/admin/launch"')
-    const mobileNavSection = src.match(/MobileAdminNav[\s\S]{0,600}/)?.[0] ?? ""
-    expect(mobileNavSection).not.toContain('"/admin/cities"')
+    expect(navLinksSrc).toContain('"/admin/launch"')
+    // AdminShell uses those links
+    const shellSrc = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AdminShell.tsx",
+      "utf-8"
+    )
+    expect(shellSrc).toContain("ADMIN_NAV_LINKS")
+  })
+
+  test("admin dashboard uses AdminShell, not Cities as a tab (no /admin/cities in nav links)", async () => {
+    const navLinksSrc = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/lib/admin-nav-links.ts",
+      "utf-8"
+    )
+    expect(navLinksSrc).toContain('"/admin/launch"')
+    expect(navLinksSrc).not.toContain('"/admin/cities"')
   })
 
   test("MobileAdminNav is sticky with backdrop-blur and scroll fade", async () => {
@@ -1026,7 +1039,7 @@ test.describe("Logo routing — mode-aware navigation", () => {
     }
   })
 
-  test("admin pages do not render fan BottomNav (showBottomNav={false})", async () => {
+  test("admin pages do not render fan BottomNav (AdminShell enforces showBottomNav={false})", async () => {
     const adminPages = [
       "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
       "/Users/mohamed/Desktop/Projects/fanrush/app/admin/venues/page.tsx",
@@ -1037,8 +1050,15 @@ test.describe("Logo routing — mode-aware navigation", () => {
     ]
     for (const p of adminPages) {
       const src = fs.readFileSync(p, "utf-8")
-      expect(src).toContain("showBottomNav={false}")
+      // Admin pages now delegate to AdminShell, which enforces showBottomNav={false}
+      expect(src).toContain("AdminShell")
     }
+    // Verify AdminShell itself has showBottomNav={false}
+    const shellSrc = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AdminShell.tsx",
+      "utf-8"
+    )
+    expect(shellSrc).toContain("showBottomNav={false}")
   })
 })
 
@@ -1366,52 +1386,70 @@ test.describe("Business portal shell consistency", () => {
   })
 })
 
-// ─── Global wave background ───────────────────────────────────────────────────
+// ─── Global background (route-aware) ─────────────────────────────────────────
 
-test.describe("Global wave background", () => {
-  test("GlobalWaveBackground component file exists", async () => {
+test.describe("Global background", () => {
+  test("GlobalBackground component file exists", async () => {
     const exists = fs.existsSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalWaveBackground.tsx"
+      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalBackground.tsx"
     )
     expect(exists).toBe(true)
   })
 
-  test("GlobalWaveBackground renders fanrush-wave-bg and fanrush-wave-crowd", async () => {
+  test("GlobalBackground renders fanrush-bg and fanrush-bg-crowd with data-mode", async () => {
     const src = fs.readFileSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalWaveBackground.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalBackground.tsx",
       "utf-8"
     )
-    expect(src).toContain("fanrush-wave-bg")
-    expect(src).toContain("fanrush-wave-crowd")
+    expect(src).toContain("fanrush-bg")
+    expect(src).toContain("fanrush-bg-crowd")
     expect(src).toContain('aria-hidden="true"')
+    expect(src).toContain("data-mode")
+    expect(src).toContain("usePathname")
   })
 
-  test("GlobalWaveBackground is mounted in root layout", async () => {
+  test("GlobalBackground is route-aware — getMode logic covers all four modes", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalBackground.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"public"')
+    expect(src).toContain('"fan"')
+    expect(src).toContain('"business"')
+    expect(src).toContain('"admin"')
+    expect(src).toContain('/business')
+    expect(src).toContain('/admin')
+  })
+
+  test("GlobalBackground is mounted in root layout", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/layout.tsx",
       "utf-8"
     )
-    expect(src).toContain("GlobalWaveBackground")
+    expect(src).toContain("GlobalBackground")
+    expect(src).not.toContain("GlobalWaveBackground")
   })
 
-  test("globals.css defines fanrush-wave-bg with fixed positioning and z-index: -1", async () => {
+  test("globals.css defines fanrush-bg with fixed positioning and z-index: 0", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
     )
-    expect(src).toContain("fanrush-wave-bg")
+    expect(src).toContain("fanrush-bg")
     expect(src).toContain("position: fixed")
-    expect(src).toContain("z-index: -1")
+    expect(src).toContain("z-index: 0")
     expect(src).toContain("pointer-events: none")
   })
 
-  test("globals.css defines wave drift keyframes for animation", async () => {
+  test("globals.css defines all four data-mode backgrounds", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
     )
-    expect(src).toContain("fanrush-wave-drift")
-    expect(src).toContain("@keyframes")
+    expect(src).toContain('data-mode="public"')
+    expect(src).toContain('data-mode="fan"')
+    expect(src).toContain('data-mode="business"')
+    expect(src).toContain('data-mode="admin"')
   })
 
   test("globals.css respects prefers-reduced-motion", async () => {
@@ -1420,20 +1458,17 @@ test.describe("Global wave background", () => {
       "utf-8"
     )
     expect(src).toContain("prefers-reduced-motion")
-    expect(src).toContain("animation: none")
   })
 
-  test("globals.css has mobile breakpoint for subtler wave on small screens", async () => {
+  test("globals.css has mobile breakpoint for subtler backgrounds on small screens", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
     )
     expect(src).toContain("max-width: 767px")
-    // Mobile reduces opacity of wave ribbons
-    expect(src).toMatch(/fanrush-wave-bg::before\s*\{[^}]*opacity/)
   })
 
-  test("body background is transparent to allow wave layer to show", async () => {
+  test("body background is transparent to allow global background layer to show", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
@@ -1448,6 +1483,70 @@ test.describe("Global wave background", () => {
       "utf-8"
     )
     expect(src).toContain("html {")
-    expect(src).toContain("background-color: #030712")
+    expect(src).toContain("background-color: #07080f")
+  })
+
+  test("AdminShell component exists and uses AdminSidebar and MobileAdminNav", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AdminShell.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("AdminSidebar")
+    expect(src).toContain("MobileAdminNav")
+    expect(src).toContain("showBottomNav={false}")
+    expect(src).toContain("ADMIN_NAV_LINKS")
+  })
+
+  test("All admin pages import AdminShell instead of AppShell+AdminSidebar+MobileAdminNav", async () => {
+    const adminPages = [
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/venues/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/events/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/matches/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/sponsors/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/launch/page.tsx",
+    ]
+    for (const pagePath of adminPages) {
+      const src = fs.readFileSync(pagePath, "utf-8")
+      expect(src).toContain("AdminShell")
+      expect(src).not.toContain('import AppShell')
+      expect(src).not.toContain('import AdminSidebar')
+      expect(src).not.toContain('import MobileAdminNav')
+    }
+  })
+
+  test("Header logo href is purely route-aware (not tied to auth for /business and /admin)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/Header.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("logoHref")
+    expect(src).toContain('"/business"')
+    expect(src).toContain('"/admin"')
+    expect(src).toContain('"/home"')
+    // Route check for /business should not require loginStatus !== "no"
+    expect(src).toContain('pathname?.startsWith("/business")')
+    expect(src).toContain('pathname?.startsWith("/admin")')
+  })
+
+  test("AccountMenu admin section has Fan App and Public Landing links", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('role === "admin"')
+    expect(src).toContain("/admin/launch")
+    expect(src).toContain("/home")
+    // Admin section should have Public Landing
+    expect(src).toContain('"/"')
+  })
+
+  test("AccountMenu business section has Pricing link", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('role === "business"')
+    expect(src).toContain("/business/pricing")
   })
 })

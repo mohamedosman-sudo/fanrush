@@ -1,21 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import AppShell from "@/components/AppShell"
-import AdminSidebar from "@/components/AdminSidebar"
-import MobileAdminNav from "@/components/MobileAdminNav"
+import AdminShell from "@/components/AdminShell"
 import EmptyState from "@/components/EmptyState"
 import { mockVenues } from "@/lib/mock-data"
 import { useToast } from "@/components/Toast"
-
-const ADMIN_LINKS = [
-  { label: "Dashboard", href: "/admin" },
-  { label: "Venues", href: "/admin/venues" },
-  { label: "Events", href: "/admin/events" },
-  { label: "Matches", href: "/admin/matches" },
-  { label: "Sponsors", href: "/admin/sponsors" },
-  { label: "Launch", href: "/admin/launch" },
-]
 
 type Tab = "pending" | "approved" | "rejected"
 
@@ -161,11 +150,7 @@ export default function AdminVenuesPage() {
   const filtered = venues.filter((v) => v.status === activeTab)
 
   return (
-    <AppShell showBottomNav={false} title="Admin - Venues">
-      <MobileAdminNav title="Admin" links={ADMIN_LINKS} />
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <main className="flex-1 overflow-y-auto">
+    <AdminShell title="Admin - Venues">
           <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-6">
 
             {/* Header */}
@@ -277,8 +262,6 @@ export default function AdminVenuesPage() {
             )}
 
           </div>
-        </main>
-      </div>
-    </AppShell>
+    </AdminShell>
   )
 }

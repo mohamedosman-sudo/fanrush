@@ -2,12 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import AppShell from "@/components/AppShell"
-import AdminSidebar from "@/components/AdminSidebar"
+import AdminShell from "@/components/AdminShell"
 import StatCard from "@/components/StatCard"
 import { mockVenues, mockEvents, mockMatches, mockSponsorSlots } from "@/lib/mock-data"
 import { Venue, Event } from "@/lib/types"
-import MobileAdminNav from "@/components/MobileAdminNav"
 
 const quickLinks = [
   {
@@ -76,21 +74,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <AppShell showBottomNav={false} title="Admin - Dashboard">
-      <MobileAdminNav
-        title="Admin"
-        links={[
-          { label: "Dashboard", href: "/admin" },
-          { label: "Venues", href: "/admin/venues" },
-          { label: "Events", href: "/admin/events" },
-          { label: "Matches", href: "/admin/matches" },
-          { label: "Sponsors", href: "/admin/sponsors" },
-          { label: "Launch", href: "/admin/launch" },
-        ]}
-      />
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <main className="flex-1 overflow-y-auto">
+    <AdminShell title="Admin - Dashboard">
           <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
 
             {/* Header */}
@@ -211,8 +195,6 @@ export default function AdminDashboardPage() {
             </section>
 
           </div>
-        </main>
-      </div>
-    </AppShell>
+    </AdminShell>
   )
 }

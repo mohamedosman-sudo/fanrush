@@ -21,16 +21,17 @@ export default function Header({ title, showBack, rightElement }: HeaderProps) {
   // Route-aware logo destination:
   // - Inside /business/* → /business (keeps operators in their portal)
   // - Inside /admin/* → /admin (keeps admins in their console)
-  // - Logged-out → / (public landing)
+  // - Public routes (/, /pricing, /advertise, /about, /legal) → /
   // - Logged-in fan → /home
-  const logoHref =
-    loginStatus !== "no" && pathname?.startsWith("/business")
-      ? "/business"
-      : loginStatus !== "no" && pathname?.startsWith("/admin")
-      ? "/admin"
-      : loginStatus === "no"
-      ? "/"
-      : "/home"
+  const logoHref = pathname?.startsWith("/business")
+    ? "/business"
+    : pathname?.startsWith("/admin")
+    ? "/admin"
+    : pathname === "/" || /^\/(pricing|advertise|about|legal)/.test(pathname ?? "")
+    ? "/"
+    : loginStatus === "no"
+    ? "/"
+    : "/home"
 
   function handleBack() {
     if (window.history.length > 1) {

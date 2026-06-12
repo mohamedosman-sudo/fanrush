@@ -1,19 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import AppShell from "@/components/AppShell"
-import AdminSidebar from "@/components/AdminSidebar"
-import MobileAdminNav from "@/components/MobileAdminNav"
+import AdminShell from "@/components/AdminShell"
 import { SponsorSlot } from "@/lib/types"
-
-const ADMIN_LINKS = [
-  { label: "Dashboard", href: "/admin" },
-  { label: "Venues", href: "/admin/venues" },
-  { label: "Events", href: "/admin/events" },
-  { label: "Matches", href: "/admin/matches" },
-  { label: "Sponsors", href: "/admin/sponsors" },
-  { label: "Launch", href: "/admin/launch" },
-]
 
 const configured = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -274,11 +263,7 @@ export default function AdminSponsorsPage() {
   const loggedOutClicks = allClicks.filter((c) => c.user_id === null).length
 
   return (
-    <AppShell showBottomNav={false} title="Admin - Sponsors">
-      <MobileAdminNav title="Admin" links={ADMIN_LINKS} />
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <main className="flex-1 overflow-y-auto">
+    <AdminShell title="Admin - Sponsors">
           <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
 
             {/* ── Header ──────────────────────────────────────────────── */}
@@ -591,9 +576,7 @@ export default function AdminSponsorsPage() {
             </div>
 
           </div>
-        </main>
-      </div>
-    </AppShell>
+    </AdminShell>
   )
 }
 

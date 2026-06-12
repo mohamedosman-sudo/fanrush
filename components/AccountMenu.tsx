@@ -111,6 +111,12 @@ export default function AccountMenu({ email }: AccountMenuProps) {
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
               } onClick={close} />
+              <MenuItem href="/" label="Public Landing" icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              } onClick={close} />
             </section>
           )}
 
@@ -124,11 +130,6 @@ export default function AccountMenu({ email }: AccountMenuProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 21V7l9-4 9 4v14M9 21V12h6v9" />
                 </svg>
               } onClick={close} />
-              <MenuItem href="/business/analytics" label="Analytics" icon={
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-              } onClick={close} />
               <MenuItem href="/business/add-venue" label="Add Venue" icon={
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path strokeLinecap="round" d="M12 5v14M5 12h14" />
@@ -140,42 +141,55 @@ export default function AccountMenu({ email }: AccountMenuProps) {
                   <path strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4" />
                 </svg>
               } onClick={close} />
+              <MenuItem href="/business/analytics" label="Analytics" icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              } onClick={close} />
+              <MenuItem href="/business/pricing" label="Pricing" icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5v1.5h-2v-1.5c-1.66-.41-3-1.92-3-3.5h2c0 .83.67 1.5 1.5 1.5h1c.83 0 1.5-.67 1.5-1.5 0-.82-.66-1.5-1.5-1.5h-1c-1.93 0-3.5-1.57-3.5-3.5 0-1.58 1.34-3.09 3-3.5V7h2v1.5c1.66.41 3 1.92 3 3.5h-2c0-.83-.67-1.5-1.5-1.5h-1c-.83 0-1.5.67-1.5 1.5 0 .82.66 1.5 1.5 1.5h1c1.93 0 3.5 1.57 3.5 3.5 0 1.58-1.34 3.09-3 3.5z" />
+                </svg>
+              } onClick={close} />
               <MenuItem href="/home" label="Fan App" icon={
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
               } onClick={close} />
+              <MenuItem href="/" label="Public Landing" icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              } onClick={close} />
             </section>
           )}
 
-          {/* Common items */}
-          <section className="border-b border-white/5 py-1">
-            <MenuItem href="/profile" label="Profile" icon={
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            } onClick={close} />
-            <MenuItem href="/account" label="Account Settings" icon={
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            } onClick={close} />
-            <MenuItem href="/onboarding" label="Update Preferences" icon={
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <polyline points="1 4 1 10 7 10" />
-                <path d="M3.51 15a9 9 0 1 0 .49-3.5" />
-              </svg>
-            } onClick={close} />
-            <MenuItem href="/" label="Public Landing Page" icon={
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <circle cx="12" cy="12" r="10" />
-                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-            } onClick={close} />
-          </section>
+          {/* Common items for fan role (or no role) */}
+          {role !== "admin" && role !== "business" && (
+            <section className="border-b border-white/5 py-1">
+              <MenuItem href="/home" label="Home" icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              } onClick={close} />
+              <MenuItem href="/profile" label="Profile" icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              } onClick={close} />
+              <MenuItem href="/" label="Public Landing" icon={
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              } onClick={close} />
+            </section>
+          )}
+
 
           {/* Logout */}
           <div className="py-1">

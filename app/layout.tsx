@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import Providers from "@/components/Providers"
-import GlobalWaveBackground from "@/components/GlobalWaveBackground"
+import GlobalBackground from "@/components/GlobalBackground"
 
 /**
  * Explicit viewport export (Next.js 15+ requirement).
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col">
-        <GlobalWaveBackground />
+        <GlobalBackground />
         <div className="relative z-10 min-h-full flex flex-col">
           <Providers>{children}</Providers>
         </div>

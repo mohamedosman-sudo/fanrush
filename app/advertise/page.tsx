@@ -132,7 +132,7 @@ const REASONS = [
 
 export default function AdvertisePage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen text-white">
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md border-b border-white/10">
