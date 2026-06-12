@@ -413,7 +413,7 @@ test.describe("Navigation mode — source code checks", () => {
     )
     expect(src).toContain("List your first venue")
     expect(src).toContain("Create your first event")
-    expect(src).toContain("rejection_reason")
+    expect(src).toContain("rejection_reason: null")
     expect(src).toContain("Edit &amp; resubmit")
     expect(src).toContain("RejectionNote")
     expect(src).toContain("NextActionHint")
@@ -796,7 +796,7 @@ test.describe("Business portal — data integrity", () => {
     )
     expect(src).toContain('setLoadMode("error")')
     expect(src).toContain("hasError")
-    expect(src).toContain("Unable to load your listings")
+    expect(src).toContain("load your listings right now")
   })
 
   test("business venue edit route has owner_id check and not-found state", async () => {

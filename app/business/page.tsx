@@ -86,7 +86,7 @@ function StatusBadge({ status }: { status: "pending" | "approved" | "rejected" }
 function RejectionNote({ reason }: { reason?: string | null }) {
   if (!reason) return null
   return (
-    <div className="mt-3 p-3 bg-red-500/8 border border-red-500/20 rounded-xl">
+    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
       <p className="text-red-400 text-xs font-semibold mb-0.5">Rejection reason</p>
       <p className="text-red-300 text-xs leading-relaxed">{reason}</p>
     </div>
@@ -143,7 +143,7 @@ export default function BusinessPage() {
 
         const withJoin = await supabase
           .from("venues")
-          .select("id, name, city_id, cities(name), address, status, featured, views, clicks, saves, bookings, rejection_reason")
+          .select("id, name, city_id, cities(name), address, status, featured, views, clicks, saves, bookings")
           .eq("owner_id", user.id)
           .order("created_at", { ascending: false })
 
@@ -151,7 +151,7 @@ export default function BusinessPage() {
           // Retry without the city join in case the FK alias differs.
           const plain = await supabase
             .from("venues")
-            .select("id, name, city_id, address, status, featured, views, clicks, saves, bookings, rejection_reason")
+            .select("id, name, city_id, address, status, featured, views, clicks, saves, bookings")
             .eq("owner_id", user.id)
             .order("created_at", { ascending: false })
           venueData = plain.data ?? null
@@ -185,7 +185,7 @@ export default function BusinessPage() {
           clicks: v.clicks ?? 0,
           saves: v.saves ?? 0,
           bookings: v.bookings ?? 0,
-          rejection_reason: v.rejection_reason ?? null,
+          rejection_reason: null,
         }))
 
         setVenues(mappedVenues)
@@ -194,7 +194,7 @@ export default function BusinessPage() {
           const venueIds = mappedVenues.map((v) => v.id)
           const { data: eventData, error: eventErr } = await supabase
             .from("events")
-            .select("id, title, description, event_date, status, rejection_reason")
+            .select("id, title, description, event_date, status")
             .in("venue_id", venueIds)
             .order("event_date", { ascending: true })
 
@@ -206,7 +206,7 @@ export default function BusinessPage() {
               description: e.description ?? "",
               date: e.event_date ?? "",
               status: e.status ?? "pending",
-              rejection_reason: e.rejection_reason ?? null,
+              rejection_reason: null,
             })))
           }
         }
@@ -282,16 +282,16 @@ export default function BusinessPage() {
             )}
 
             {hasError && (
-              <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-3">
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3">
                 <p className="text-red-300 text-sm font-semibold">
-                  Unable to load your listings. Check your connection and try refreshing.
+                  We couldn&apos;t load your listings right now. Please refresh or try again shortly.
                 </p>
               </div>
             )}
 
             {/* Action alerts */}
             {!loading && hasRejected && (
-              <div className="rounded-xl border border-red-500/30 bg-red-500/8 px-4 py-4 flex items-start gap-3">
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 flex items-start gap-3">
                 <span className="text-red-400 text-xl flex-shrink-0">⚠</span>
                 <div>
                   <p className="text-red-300 font-bold text-sm">Action required</p>
