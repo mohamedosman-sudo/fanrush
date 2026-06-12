@@ -8,6 +8,7 @@ import StatCard from "@/components/StatCard"
 import { mockVenues, mockEvents } from "@/lib/mock-data"
 import MobileAdminNav from "@/components/MobileAdminNav"
 import { useComingSoon } from "@/components/useComingSoon"
+import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
 
 type LoadMode = "loading" | "live" | "empty" | "preview" | "error"
 
@@ -163,9 +164,14 @@ export default function BusinessPage() {
           venueErr = withJoin.error
         }
 
-        if (venueErr || !venueData) {
-          console.warn("[business/page] venues error", venueErr)
+        if (venueErr) {
+          console.warn("[business/page] venues error:", venueErr.message)
           setLoadMode("error")
+          return
+        }
+        // venueData is null only if both queries returned null without an error — treat as empty.
+        if (!venueData) {
+          setLoadMode("empty")
           return
         }
 
@@ -244,14 +250,7 @@ export default function BusinessPage() {
 
   return (
     <AppShell title="Business Portal" showBottomNav={false}>
-      <MobileAdminNav
-        title="Business"
-        links={[
-          { label: "Overview", href: "/business" },
-          { label: "Add Venue", href: "/business/add-venue" },
-          { label: "Add Event", href: "/business/add-event" },
-        ]}
-      />
+      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
       <div className="flex min-h-screen bg-[#0a0a0f]">
         <div className="hidden md:block flex-shrink-0">
           <BusinessSidebar />

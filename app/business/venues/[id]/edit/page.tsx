@@ -9,6 +9,7 @@ import MobileAdminNav from "@/components/MobileAdminNav"
 import { useToast } from "@/components/Toast"
 import { mockCities, mockMatches } from "@/lib/mock-data"
 import { formatKickoffTime } from "@/lib/utils"
+import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -303,14 +304,7 @@ export default function EditVenuePage({
 
   return (
     <AppShell title="Edit Venue" showBottomNav={false} showBack>
-      <MobileAdminNav
-        title="Business"
-        links={[
-          { label: "Overview", href: "/business" },
-          { label: "Add Venue", href: "/business/add-venue" },
-          { label: "Add Event", href: "/business/add-event" },
-        ]}
-      />
+      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
       <div className="bg-[#0a0a0f] min-h-screen">
         {/* Re-review notice */}
         <div className="max-w-2xl mx-auto px-4 pt-6">

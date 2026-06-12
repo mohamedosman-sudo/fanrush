@@ -1035,3 +1035,148 @@ test.describe("Logo routing — mode-aware navigation", () => {
     }
   })
 })
+
+// ─── Business analytics page ──────────────────────────────────────────────────
+
+test.describe("Business analytics page", () => {
+  test("BusinessSidebar Analytics href is /business/analytics, not a hash", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"/business/analytics"')
+    expect(src).not.toContain('"/business#analytics"')
+  })
+
+  test("/business/analytics page file exists", async () => {
+    const exists = fs.existsSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx"
+    )
+    expect(exists).toBe(true)
+  })
+
+  test("/business/analytics page has correct title and subtitle copy", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("Business Analytics")
+    expect(src).toContain("Track how fans engage")
+  })
+
+  test("/business/analytics does not present fake analytics as live", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "utf-8"
+    )
+    // Preview numbers must be gated behind preview mode, not shown as live
+    expect(src).toContain("loadMode === \"preview\"")
+    expect(src).toContain("Example data")
+    // Must have an empty/no-data state
+    expect(src).toContain("Analytics will appear")
+  })
+
+  test("/business/analytics uses loadMode states with live/empty/preview/error", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"live"')
+    expect(src).toContain('"empty"')
+    expect(src).toContain('"preview"')
+    expect(src).toContain('"error"')
+  })
+
+  test("/business/analytics shows only approved venues", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('.eq("status", "approved")')
+  })
+
+  test("/business/analytics does not show fan BottomNav", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("showBottomNav={false}")
+  })
+
+  test("/business/analytics includes MobileAdminNav with BUSINESS_NAV_LINKS", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("MobileAdminNav")
+    expect(src).toContain("BUSINESS_NAV_LINKS")
+  })
+
+  test("/business/analytics has safe-area bottom padding", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "utf-8"
+    )
+    expect(src).toMatch(/safe-area-inset-bottom/)
+  })
+})
+
+// ─── Business nav — shared constant + all pages ───────────────────────────────
+
+test.describe("Business nav — shared constant", () => {
+  test("BUSINESS_NAV_LINKS constant includes all four nav items", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/lib/business-nav-links.ts",
+      "utf-8"
+    )
+    expect(src).toContain('"/business"')
+    expect(src).toContain('"/business/add-venue"')
+    expect(src).toContain('"/business/add-event"')
+    expect(src).toContain('"/business/analytics"')
+  })
+
+  const allBusinessPages = [
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+  ]
+
+  for (const pagePath of allBusinessPages) {
+    const label = pagePath.replace("/Users/mohamed/Desktop/Projects/fanrush/app", "")
+    test(`${label} uses BUSINESS_NAV_LINKS`, async () => {
+      const src = fs.readFileSync(pagePath, "utf-8")
+      expect(src).toContain("BUSINESS_NAV_LINKS")
+    })
+  }
+
+  test("BusinessSidebar includes all four nav sections", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"Overview"')
+    expect(src).toContain('"Add Venue"')
+    expect(src).toContain('"Add Event"')
+    expect(src).toContain('"Analytics"')
+    expect(src).toContain('"/business/analytics"')
+  })
+})
+
+// ─── Business load error — empty vs error distinction ─────────────────────────
+
+test.describe("Business load — error vs empty state", () => {
+  test("business page separates venueErr from null venueData", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    // Error only on actual query error, not null data
+    expect(src).toContain("if (venueErr)")
+    expect(src).toContain("setLoadMode(\"error\")")
+    // Null data without error → empty, not error
+    expect(src).toContain("setLoadMode(\"empty\")")
+  })
+})

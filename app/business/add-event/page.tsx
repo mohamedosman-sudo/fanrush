@@ -8,12 +8,7 @@ import MobileAdminNav from "@/components/MobileAdminNav"
 import { mockVenues, mockMatches } from "@/lib/mock-data"
 import { useToast } from "@/components/Toast"
 import { formatKickoffTime } from "@/lib/utils"
-
-const BUSINESS_LINKS = [
-  { label: "Overview", href: "/business" },
-  { label: "Add Venue", href: "/business/add-venue" },
-  { label: "Add Event", href: "/business/add-event" },
-]
+import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
 
 interface FormErrors {
   name?: string
@@ -168,7 +163,7 @@ export default function AddEventPage() {
   if (submitted) {
     return (
       <AppShell title="Add Event" showBottomNav={false} showBack>
-        <MobileAdminNav title="Business" links={BUSINESS_LINKS} />
+        <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
         <div className="bg-[#0a0a0f] min-h-screen flex items-center justify-center px-4">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-8 text-center max-w-sm w-full">
             <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
@@ -215,7 +210,7 @@ export default function AddEventPage() {
 
   return (
     <AppShell title="Add Event" showBottomNav={false} showBack>
-      <MobileAdminNav title="Business" links={BUSINESS_LINKS} />
+      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
       <div className="bg-[#0a0a0f] min-h-screen">
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-6 space-y-8">
 

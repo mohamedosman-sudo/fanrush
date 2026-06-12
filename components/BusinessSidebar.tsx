@@ -37,7 +37,7 @@ const businessLinks = [
   },
   {
     label: "Analytics",
-    href: "/business#analytics",
+    href: "/business/analytics",
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 20h18M5 20V14m4 6V9m4 11V4m4 16v-7" />
@@ -64,7 +64,7 @@ export default function BusinessSidebar() {
         {businessLinks.map((link) => {
           const isActive =
             pathname === link.href ||
-            (link.href !== "/business" && !link.href.includes("#") && pathname?.startsWith(link.href))
+            (link.href !== "/business" && pathname?.startsWith(link.href))
           return (
             <Link
               key={link.href}

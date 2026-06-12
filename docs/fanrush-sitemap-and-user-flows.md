@@ -1,6 +1,6 @@
 # FanRush — Sitemap, User Flows & Role-Based Navigation Blueprint
 
-_Last updated: 2026-06-12_
+_Last updated: 2026-06-12 (rev 2)_
 
 ---
 
@@ -428,6 +428,32 @@ Rejected listing card:
 - [ ] Empty venues state has Add Venue CTA
 - [ ] Empty events state has Add Event CTA
 - [ ] Action required alert shown when any listing is rejected
+
+### Business portal routes
+| Route | Page |
+|---|---|
+| `/business` | Overview — venues, events, status |
+| `/business/add-venue` | Add a new venue |
+| `/business/add-event` | Add a new event |
+| `/business/venues/[id]/edit` | Edit an owned venue |
+| `/business/events/[id]/edit` | Edit an owned event |
+| `/business/analytics` | Analytics dashboard for approved venues |
+
+### Business navigation rules (enforced in code)
+- All business pages render `MobileAdminNav` with `BUSINESS_NAV_LINKS` (shared constant from `lib/business-nav-links.ts`).
+- Nav tabs: Overview | Add Venue | Add Event | Analytics.
+- `BusinessSidebar` (desktop) and `MobileAdminNav` (mobile) persist across every business page.
+- Business logo (sidebar + header) links to `/business` — keeps operator inside the portal.
+- "Back to App" at the bottom of the sidebar links to `/home` — intentional fan-app escape hatch.
+- Public landing page (`/`) is accessible via AccountMenu, not via the business logo.
+- Analytics tab links to `/business/analytics` (real route) — NOT a hash fragment.
+
+### Business analytics rules (enforced in code)
+- `loadMode` states: `loading | live | empty | preview | error`.
+- Preview mode (Supabase not configured / not logged in): shows clearly labelled "Example data" numbers — never presented as real metrics.
+- Empty state (logged in, query succeeds, 0 approved venues with activity): shows "Analytics will appear once fans view, save, or book your venue." — no fake numbers.
+- Live mode: shows real `views`, `clicks`, `saves`, `bookings` from Supabase `venues` table (approved venues only).
+- Error state: shows red error banner. Triggered only on a real query error (`venueErr` set), not on null/empty data.
 
 ### Business data integrity rules (enforced in code)
 - Business dashboard must **never** mix mock/editable data with live business accounts.
