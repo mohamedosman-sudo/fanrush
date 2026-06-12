@@ -3,12 +3,10 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import AppShell from "@/components/AppShell"
-import MobileAdminNav from "@/components/MobileAdminNav"
+import BusinessShell from "@/components/BusinessShell"
 import { mockVenues, mockMatches } from "@/lib/mock-data"
 import { useToast } from "@/components/Toast"
 import { formatKickoffTime } from "@/lib/utils"
-import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
 
 interface FormErrors {
   name?: string
@@ -162,9 +160,8 @@ export default function AddEventPage() {
 
   if (submitted) {
     return (
-      <AppShell title="Add Event" showBottomNav={false} showBack>
-        <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
-        <div className="bg-[#0a0a0f] min-h-screen flex items-center justify-center px-4">
+      <BusinessShell title="Add Event">
+        <div className="flex items-center justify-center min-h-[60vh] px-4">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-8 text-center max-w-sm w-full">
             <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
               <svg
@@ -204,15 +201,20 @@ export default function AddEventPage() {
             </div>
           </div>
         </div>
-      </AppShell>
+      </BusinessShell>
     )
   }
 
   return (
-    <AppShell title="Add Event" showBottomNav={false} showBack>
-      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
-      <div className="bg-[#0a0a0f] min-h-screen">
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-6 space-y-8">
+    <BusinessShell title="Add Event">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+        <Link
+          href="/business"
+          className="inline-flex items-center gap-1 text-gray-400 text-sm hover:text-white transition-colors mb-6 touch-manipulation"
+        >
+          ← Business Portal
+        </Link>
+        <form onSubmit={handleSubmit} className="space-y-8">
 
           {/* Event Details */}
           <div className="space-y-3">
@@ -327,6 +329,6 @@ export default function AddEventPage() {
           </button>
         </form>
       </div>
-    </AppShell>
+    </BusinessShell>
   )
 }

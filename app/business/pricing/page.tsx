@@ -2,10 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import AppShell from "@/components/AppShell"
-import BusinessSidebar from "@/components/BusinessSidebar"
-import MobileAdminNav from "@/components/MobileAdminNav"
-import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
+import BusinessShell from "@/components/BusinessShell"
 
 function Check({ children }: { children: React.ReactNode }) {
   return (
@@ -49,15 +46,8 @@ export default function BusinessPricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
-    <AppShell title="Pricing" showBottomNav={false}>
-      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
-      <div className="flex min-h-screen bg-[#0a0a0f]">
-        <div className="hidden md:block flex-shrink-0">
-          <BusinessSidebar />
-        </div>
-
-        <main className="flex-1">
-          <div className="max-w-4xl mx-auto px-4 py-8 pb-[calc(3rem+env(safe-area-inset-bottom))] space-y-12">
+    <BusinessShell title="Pricing">
+      <div className="max-w-4xl mx-auto px-4 py-8 pb-[calc(3rem+env(safe-area-inset-bottom))] space-y-12">
 
             {/* HERO */}
             <section className="text-center space-y-3">
@@ -291,9 +281,7 @@ export default function BusinessPricingPage() {
               </div>
             </section>
 
-          </div>
-        </main>
       </div>
-    </AppShell>
+    </BusinessShell>
   )
 }

@@ -448,12 +448,19 @@ test.describe("Navigation mode — structural checks", () => {
     expect(adminPageSrc).toMatch(/showBottomNav.*false|AppShell[^>]*showBottomNav={false}/)
   })
 
-  test("business page source uses showBottomNav={false}", async () => {
-    const src = fs.readFileSync(
+  test("business page uses BusinessShell which enforces showBottomNav={false}", async () => {
+    const pageSrc = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
       "utf-8"
     )
-    expect(src).toContain("showBottomNav={false}")
+    const shellSrc = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessShell.tsx",
+      "utf-8"
+    )
+    // Business page delegates shell to BusinessShell
+    expect(pageSrc).toContain("BusinessShell")
+    // BusinessShell is where showBottomNav={false} is declared
+    expect(shellSrc).toContain("showBottomNav={false}")
   })
 
   test("business page does not show bottom nav (browser)", async ({ page }) => {
@@ -992,31 +999,30 @@ test.describe("Logo routing — mode-aware navigation", () => {
     expect(src).toMatch(/[Pp]ublic [Ll]anding/)
   })
 
-  test("business pages do not render fan BottomNav (showBottomNav={false})", async () => {
-    const businessPages = [
-      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
-      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
-      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
-      "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
-      "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
-    ]
-    for (const p of businessPages) {
-      const src = fs.readFileSync(p, "utf-8")
-      expect(src).toContain("showBottomNav={false}")
-    }
+  test("BusinessShell centralises showBottomNav={false}, MobileAdminNav and BusinessSidebar", async () => {
+    const shell = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessShell.tsx",
+      "utf-8"
+    )
+    expect(shell).toContain("showBottomNav={false}")
+    expect(shell).toContain("MobileAdminNav")
+    expect(shell).toContain("BusinessSidebar")
+    expect(shell).toContain("BUSINESS_NAV_LINKS")
   })
 
-  test("business pages all include MobileAdminNav for persistent nav", async () => {
+  test("all business pages use BusinessShell for the portal shell", async () => {
     const businessPages = [
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
     ]
     for (const p of businessPages) {
       const src = fs.readFileSync(p, "utf-8")
-      expect(src).toContain("MobileAdminNav")
+      expect(src).toContain("BusinessShell")
     }
   })
 
@@ -1095,21 +1101,21 @@ test.describe("Business analytics page", () => {
     expect(src).toContain('.eq("status", "approved")')
   })
 
-  test("/business/analytics does not show fan BottomNav", async () => {
+  test("/business/analytics does not show fan BottomNav (via BusinessShell)", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
       "utf-8"
     )
-    expect(src).toContain("showBottomNav={false}")
+    // BusinessShell centralises showBottomNav={false} — page only needs to use the shell
+    expect(src).toContain("BusinessShell")
   })
 
-  test("/business/analytics includes MobileAdminNav with BUSINESS_NAV_LINKS", async () => {
+  test("/business/analytics uses BusinessShell (provides nav + sidebar)", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
       "utf-8"
     )
-    expect(src).toContain("MobileAdminNav")
-    expect(src).toContain("BUSINESS_NAV_LINKS")
+    expect(src).toContain("BusinessShell")
   })
 
   test("/business/analytics has safe-area bottom padding", async () => {
@@ -1136,25 +1142,31 @@ test.describe("Business nav — shared constant", () => {
     expect(src).toContain('"/business/pricing"')
   })
 
-  const allBusinessPages = [
-    "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
-    "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
-    "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
-    "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
-    "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
-    "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
-    "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
-  ]
+  test("BusinessShell imports BUSINESS_NAV_LINKS (all pages get nav via the shell)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessShell.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("BUSINESS_NAV_LINKS")
+  })
 
-  for (const pagePath of allBusinessPages) {
-    const label = pagePath.replace("/Users/mohamed/Desktop/Projects/fanrush/app", "")
-    test(`${label} uses BUSINESS_NAV_LINKS`, async () => {
+  test("all business pages render via BusinessShell", async () => {
+    const allBusinessPages = [
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
+    ]
+    for (const pagePath of allBusinessPages) {
       const src = fs.readFileSync(pagePath, "utf-8")
-      expect(src).toContain("BUSINESS_NAV_LINKS")
-    })
-  }
+      expect(src).toContain("BusinessShell")
+    }
+  })
 
-  test("BusinessSidebar includes all four nav sections", async () => {
+  test("BusinessSidebar includes all nav sections", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
       "utf-8"
@@ -1223,29 +1235,12 @@ test.describe("Business pricing page", () => {
     expect(exists).toBe(true)
   })
 
-  test("/business/pricing uses BusinessSidebar", async () => {
+  test("/business/pricing uses BusinessShell (provides sidebar, nav, no BottomNav)", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
       "utf-8"
     )
-    expect(src).toContain("BusinessSidebar")
-  })
-
-  test("/business/pricing uses MobileAdminNav with BUSINESS_NAV_LINKS", async () => {
-    const src = fs.readFileSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
-      "utf-8"
-    )
-    expect(src).toContain("MobileAdminNav")
-    expect(src).toContain("BUSINESS_NAV_LINKS")
-  })
-
-  test("/business/pricing does not show fan BottomNav", async () => {
-    const src = fs.readFileSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
-      "utf-8"
-    )
-    expect(src).toContain("showBottomNav={false}")
+    expect(src).toContain("BusinessShell")
   })
 
   test("See Pricing links in business pages point to /business/pricing", async () => {
@@ -1298,5 +1293,75 @@ test.describe("AccountMenu role shortcuts", () => {
     )
     expect(src).toContain('"Fan App"')
     expect(src).toContain('"/home"')
+  })
+})
+
+// ─── Business portal shell consistency ───────────────────────────────────────
+
+test.describe("Business portal shell consistency", () => {
+  test("BusinessShell component exists", async () => {
+    const exists = fs.existsSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessShell.tsx"
+    )
+    expect(exists).toBe(true)
+  })
+
+  test("BusinessShell wraps AppShell + BusinessSidebar + MobileAdminNav", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessShell.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("AppShell")
+    expect(src).toContain("BusinessSidebar")
+    expect(src).toContain("MobileAdminNav")
+    expect(src).toContain("showBottomNav={false}")
+    expect(src).toContain("BUSINESS_NAV_LINKS")
+  })
+
+  const formPages = [
+    { path: "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx", label: "add-venue" },
+    { path: "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx", label: "add-event" },
+    { path: "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx", label: "venues/edit" },
+    { path: "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx", label: "events/edit" },
+  ]
+
+  for (const { path, label } of formPages) {
+    test(`${label} uses BusinessShell (shows sidebar on desktop)`, async () => {
+      const src = fs.readFileSync(path, "utf-8")
+      expect(src).toContain("BusinessShell")
+    })
+
+    test(`${label} has breadcrumb back link to /business`, async () => {
+      const src = fs.readFileSync(path, "utf-8")
+      // ← Business Portal breadcrumb replaces the back-arrow-only header
+      expect(src).toContain('href="/business"')
+    })
+
+    test(`${label} does not use standalone AppShell with showBack`, async () => {
+      const src = fs.readFileSync(path, "utf-8")
+      // No longer renders AppShell directly with showBack — that's gone
+      expect(src).not.toContain('showBottomNav={false} showBack')
+      expect(src).not.toContain('showBack showBottomNav={false}')
+    })
+  }
+
+  test("BusinessSidebar logo links to /business (not /home)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('href="/business"')
+    // Back to App goes to /home, but the logo itself goes to /business
+    const logoSection = src.match(/Logo[\s\S]{0,200}/)?.[0] ?? ""
+    expect(logoSection).toContain('"/business"')
+  })
+
+  test("BusinessSidebar Back to App goes to /home", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('href="/home"')
+    expect(src).toContain("Back to App")
   })
 })

@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import AppShell from "@/components/AppShell"
-import BusinessSidebar from "@/components/BusinessSidebar"
-import MobileAdminNav from "@/components/MobileAdminNav"
-import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
+import BusinessShell from "@/components/BusinessShell"
 
 const configured = !!(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -106,15 +103,8 @@ export default function BusinessAnalyticsPage() {
   const totalBookings = rows.reduce((s, r) => s + r.bookings, 0)
 
   return (
-    <AppShell title="Analytics" showBottomNav={false}>
-      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
-      <div className="flex min-h-screen bg-[#0a0a0f]">
-        <div className="hidden md:block flex-shrink-0">
-          <BusinessSidebar />
-        </div>
-
-        <main className="flex-1">
-          <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
+    <BusinessShell title="Analytics">
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
 
             {/* Header */}
             <div>
@@ -246,9 +236,7 @@ export default function BusinessAnalyticsPage() {
               </Link>
             </div>
 
-          </div>
-        </main>
       </div>
-    </AppShell>
+    </BusinessShell>
   )
 }

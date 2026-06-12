@@ -2,13 +2,10 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import AppShell from "@/components/AppShell"
-import BusinessSidebar from "@/components/BusinessSidebar"
+import BusinessShell from "@/components/BusinessShell"
 import StatCard from "@/components/StatCard"
 import { mockVenues, mockEvents } from "@/lib/mock-data"
-import MobileAdminNav from "@/components/MobileAdminNav"
 import { useComingSoon } from "@/components/useComingSoon"
-import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
 
 type LoadMode = "loading" | "live" | "empty" | "preview" | "error"
 
@@ -249,15 +246,8 @@ export default function BusinessPage() {
   const hasPending = venueCounts.pending > 0 || eventCounts.pending > 0
 
   return (
-    <AppShell title="Business Portal" showBottomNav={false}>
-      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
-      <div className="flex min-h-screen bg-[#0a0a0f]">
-        <div className="hidden md:block flex-shrink-0">
-          <BusinessSidebar />
-        </div>
-
-        <main className="flex-1">
-          <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
+    <BusinessShell title="Business Portal">
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-8">
 
             {/* Header */}
             <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -591,9 +581,7 @@ export default function BusinessPage() {
               </Link>
             </div>
 
-          </div>
-        </main>
       </div>
-    </AppShell>
+    </BusinessShell>
   )
 }

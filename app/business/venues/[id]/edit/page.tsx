@@ -3,13 +3,11 @@
 import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import AppShell from "@/components/AppShell"
+import BusinessShell from "@/components/BusinessShell"
 import CitySelector from "@/components/CitySelector"
-import MobileAdminNav from "@/components/MobileAdminNav"
 import { useToast } from "@/components/Toast"
 import { mockCities, mockMatches } from "@/lib/mock-data"
 import { formatKickoffTime } from "@/lib/utils"
-import { BUSINESS_NAV_LINKS } from "@/lib/business-nav-links"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -245,25 +243,25 @@ export default function EditVenuePage({
     }
   }
 
-  // ── Render: loading / error / not-found states ───────────────────────────────
+  // ── Render: loading ──────────────────────────────────────────────────────────
 
   if (loadState === "loading") {
     return (
-      <AppShell title="Edit Venue" showBottomNav={false} showBack>
-        <div className="bg-[#0a0a0f] min-h-screen flex items-center justify-center">
+      <BusinessShell title="Edit Venue">
+        <div className="flex items-center justify-center min-h-[60vh]">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-gray-400 text-sm">Loading venue…</p>
           </div>
         </div>
-      </AppShell>
+      </BusinessShell>
     )
   }
 
   if (loadState === "not-found") {
     return (
-      <AppShell title="Edit Venue" showBottomNav={false} showBack>
-        <div className="bg-[#0a0a0f] min-h-screen flex items-center justify-center px-4">
+      <BusinessShell title="Edit Venue">
+        <div className="flex items-center justify-center min-h-[60vh] px-4">
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center max-w-sm w-full">
             <p className="text-white font-black text-xl mb-2">Venue not found</p>
             <p className="text-gray-400 text-sm mb-6">
@@ -277,14 +275,14 @@ export default function EditVenuePage({
             </Link>
           </div>
         </div>
-      </AppShell>
+      </BusinessShell>
     )
   }
 
   if (loadState === "error") {
     return (
-      <AppShell title="Edit Venue" showBottomNav={false} showBack>
-        <div className="bg-[#0a0a0f] min-h-screen flex items-center justify-center px-4">
+      <BusinessShell title="Edit Venue">
+        <div className="flex items-center justify-center min-h-[60vh] px-4">
           <div className="bg-gray-900 border border-white/10 rounded-2xl p-8 text-center max-w-sm w-full">
             <p className="text-white font-black text-xl mb-2">Failed to load venue</p>
             <p className="text-gray-400 text-sm mb-6">Something went wrong. Please try again.</p>
@@ -296,36 +294,38 @@ export default function EditVenuePage({
             </button>
           </div>
         </div>
-      </AppShell>
+      </BusinessShell>
     )
   }
 
   // ── Render: form ─────────────────────────────────────────────────────────────
 
   return (
-    <AppShell title="Edit Venue" showBottomNav={false} showBack>
-      <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
-      <div className="bg-[#0a0a0f] min-h-screen">
+    <BusinessShell title="Edit Venue">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+        <Link
+          href="/business"
+          className="inline-flex items-center gap-1 text-gray-400 text-sm hover:text-white transition-colors mb-6 touch-manipulation"
+        >
+          ← Business Portal
+        </Link>
+
         {/* Re-review notice */}
-        <div className="max-w-2xl mx-auto px-4 pt-6">
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
-            <p className="text-yellow-300 text-sm font-semibold">
-              Saving changes will set this venue back to <strong>Pending</strong> for admin re-review. It will remain live until the review is complete.
-            </p>
-          </div>
+        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 mb-6">
+          <p className="text-yellow-300 text-sm font-semibold">
+            Saving changes will set this venue back to <strong>Pending</strong> for admin re-review. It will remain live until the review is complete.
+          </p>
         </div>
 
         {!configured && (
-          <div className="max-w-2xl mx-auto px-4 pt-4">
-            <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3">
-              <p className="text-orange-300 text-sm font-semibold">
-                Preview mode — connect Supabase to enable live venue editing.
-              </p>
-            </div>
+          <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3 mb-6">
+            <p className="text-orange-300 text-sm font-semibold">
+              Preview mode — connect Supabase to enable live venue editing.
+            </p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-6 space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
 
           {/* Venue Details */}
           <div className="space-y-4">
@@ -525,6 +525,6 @@ export default function EditVenuePage({
           </div>
         </form>
       </div>
-    </AppShell>
+    </BusinessShell>
   )
 }
