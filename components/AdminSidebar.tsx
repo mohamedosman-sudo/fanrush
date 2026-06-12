@@ -72,7 +72,7 @@ export default function AdminSidebar() {
     <aside className="w-56 bg-[#0a0a0f] border-r border-white/5 min-h-screen hidden md:flex flex-col p-4">
       {/* Logo — clicking returns to the main app */}
       <div className="px-2 py-3 mb-6">
-        <Link href="/home" className="inline-flex items-center gap-1 text-white font-black text-xl hover:opacity-80 transition-opacity">
+        <Link href="/admin" className="inline-flex items-center gap-1 text-white font-black text-xl hover:opacity-80 transition-opacity">
           <span className="text-orange-500">⚡</span>FanRush
         </Link>
         <p className="text-xs font-black uppercase tracking-widest text-gray-500 mt-1">Admin Panel</p>

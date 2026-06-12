@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { ReactNode } from "react"
 import AuthNav from "./AuthNav"
 import { useIsLoggedIn } from "@/lib/hooks/useIsLoggedIn"
@@ -15,11 +15,22 @@ interface HeaderProps {
 
 export default function Header({ title, showBack, rightElement }: HeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const loginStatus = useIsLoggedIn()
-  // Only point the logo at "/" when we are certain the user is logged out.
-  // "loading" defaults to "/home" so logged-in users never see a flash to "/".
-  // Route transitions are always instant (context is warm) so this is stable.
-  const logoHref = loginStatus === "no" ? "/" : "/home"
+
+  // Route-aware logo destination:
+  // - Inside /business/* → /business (keeps operators in their portal)
+  // - Inside /admin/* → /admin (keeps admins in their console)
+  // - Logged-out → / (public landing)
+  // - Logged-in fan → /home
+  const logoHref =
+    loginStatus !== "no" && pathname?.startsWith("/business")
+      ? "/business"
+      : loginStatus !== "no" && pathname?.startsWith("/admin")
+      ? "/admin"
+      : loginStatus === "no"
+      ? "/"
+      : "/home"
 
   function handleBack() {
     if (window.history.length > 1) {

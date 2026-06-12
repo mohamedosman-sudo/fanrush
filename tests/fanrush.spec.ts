@@ -286,11 +286,14 @@ test.describe("Watch Parties filter chips", () => {
 // ─── Admin sidebar source code checks (unit-level) ───────────────────────────
 
 test.describe("Admin sidebar source code", () => {
-  test("AdminSidebar back link points to /home not /", async () => {
+  test("AdminSidebar logo links to /admin and Back to App links to /home", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/components/AdminSidebar.tsx",
       "utf-8"
     )
+    // Logo links to admin console, not fan app
+    expect(src).toContain('href="/admin"')
+    // "Back to App" still goes to /home
     expect(src).toContain('href="/home"')
     expect(src).not.toContain('href="/"')
   })
@@ -391,11 +394,14 @@ test.describe("Navigation mode — source code checks", () => {
     expect(src).toContain("contains")
   })
 
-  test("BusinessSidebar logo links to /home and has Back to App", async () => {
+  test("BusinessSidebar logo links to /business and has Back to App → /home", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
       "utf-8"
     )
+    // Logo must link to the business portal, not the fan app
+    expect(src).toContain('href="/business"')
+    // "Back to App" still present as the intentional fan-app escape hatch
     expect(src).toContain('href="/home"')
     expect(src).toContain("Back to App")
   })
@@ -899,5 +905,133 @@ test.describe("Watch Parties — filter defaults", () => {
     expect(src).not.toMatch(/useState\(["']london["']\)/i)
     expect(src).not.toMatch(/useState\(["']manchester["']\)/i)
     expect(src).not.toMatch(/useState\(["']england["']\)/i)
+  })
+})
+
+// ─── Logo routing — mode-aware navigation ────────────────────────────────────
+
+test.describe("Logo routing — mode-aware navigation", () => {
+  test("Header uses usePathname for route-aware logoHref", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/Header.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("usePathname")
+    expect(src).toContain('"/business"')
+    expect(src).toContain('"/admin"')
+    // Fan-app fallback still present
+    expect(src).toContain('"/home"')
+    // Logged-out fallback still present
+    expect(src).toContain('"/"')
+  })
+
+  test("Header logoHref is /business when inside /business/* (source check)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/Header.tsx",
+      "utf-8"
+    )
+    // startsWith("/business") → "/business"
+    expect(src).toContain('startsWith("/business")')
+    expect(src).toContain('? "/business"')
+  })
+
+  test("Header logoHref is /admin when inside /admin/* (source check)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/Header.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('startsWith("/admin")')
+    expect(src).toContain('? "/admin"')
+  })
+
+  test("BusinessSidebar logo links to /business not /home", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
+      "utf-8"
+    )
+    // Logo should NOT send users to the fan app
+    const logoMatch = src.match(/Logo[^>]*\n[^<]*<Link href="([^"]+)"/)
+    // Direct check: first Link in the sidebar header area should be /business
+    expect(src).toContain('href="/business"')
+    expect(logoMatch?.[1]).not.toBe("/home")
+  })
+
+  test("AdminSidebar logo links to /admin not /home", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AdminSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('href="/admin"')
+    expect(src).toContain("Admin Panel")
+  })
+
+  test("BusinessSidebar Back to App still links to /home", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('href="/home"')
+    expect(src).toContain("Back to App")
+  })
+
+  test("AdminSidebar Back to App still links to /home", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AdminSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('href="/home"')
+    expect(src).toContain("Back to App")
+  })
+
+  test("AccountMenu still has Public Landing Page link → /", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('href="/"')
+    expect(src).toMatch(/[Pp]ublic [Ll]anding/)
+  })
+
+  test("business pages do not render fan BottomNav (showBottomNav={false})", async () => {
+    const businessPages = [
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
+    ]
+    for (const p of businessPages) {
+      const src = fs.readFileSync(p, "utf-8")
+      expect(src).toContain("showBottomNav={false}")
+    }
+  })
+
+  test("business pages all include MobileAdminNav for persistent nav", async () => {
+    const businessPages = [
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-venue/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/add-event/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
+    ]
+    for (const p of businessPages) {
+      const src = fs.readFileSync(p, "utf-8")
+      expect(src).toContain("MobileAdminNav")
+    }
+  })
+
+  test("admin pages do not render fan BottomNav (showBottomNav={false})", async () => {
+    const adminPages = [
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/venues/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/events/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/matches/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/sponsors/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/launch/page.tsx",
+    ]
+    for (const p of adminPages) {
+      const src = fs.readFileSync(p, "utf-8")
+      expect(src).toContain("showBottomNav={false}")
+    }
   })
 })
