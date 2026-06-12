@@ -31,15 +31,15 @@ html {
 }
 
 .stadium-bg[data-mode="business"] {
-  --stadium-image-opacity: 0.22;
-  --stadium-line-opacity: 0.16;
-  --stadium-overlay-opacity: 0.68;
+  --stadium-image-opacity: 0.32;
+  --stadium-line-opacity: 0.22;
+  --stadium-overlay-opacity: 0.62;
 }
 
 .stadium-bg[data-mode="admin"] {
-  --stadium-image-opacity: 0.14;
-  --stadium-line-opacity: 0.08;
-  --stadium-overlay-opacity: 0.78;
+  --stadium-image-opacity: 0.22;
+  --stadium-line-opacity: 0.14;
+  --stadium-overlay-opacity: 0.72;
 }
 
 .stadium-bg__image,

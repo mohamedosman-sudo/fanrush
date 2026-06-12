@@ -72,7 +72,7 @@ export default function OnboardingPage() {
     (step === 3 && selectedInterests.length > 0)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
+    <div className="min-h-screen text-white flex flex-col">
       {/* ── HEADER ── */}
       <div className="border-b border-white/10 px-4 py-4 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-lg mx-auto">

@@ -66,7 +66,7 @@ export default function AdminCitiesPage() {
 
   return (
     <AppShell showBottomNav={false} title="Admin - Cities">
-      <div className="flex min-h-screen bg-[#0a0a0f]">
+      <div className="flex min-h-screen">
         <AdminSidebar />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 py-6">

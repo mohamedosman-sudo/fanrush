@@ -49,10 +49,6 @@ export default function LandingPage() {
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.12) 0%, transparent 70%), #0a0a0f",
-        }}
       >
         {/* Floating badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-semibold mb-8">
@@ -174,7 +170,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOR FANS ────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#12121a]">
+      <section className="py-24">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-14">
             <div className="inline-block w-12 h-1 bg-orange-500 rounded-full mb-4" />
@@ -257,10 +253,6 @@ export default function LandingPage() {
       {/* ── PREDICTION GAME ─────────────────────────────────────────────── */}
       <section
         className="py-24 relative overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 80% at 100% 50%, rgba(249,115,22,0.08) 0%, transparent 60%), #0f0f16",
-        }}
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-14 items-center">
@@ -449,7 +441,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── REVENUE / MONETISATION ──────────────────────────────────────── */}
-      <section className="py-24 bg-[#12121a]">
+      <section className="py-24">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-14">
             <div className="inline-block w-12 h-1 bg-orange-500 rounded-full mb-4" />

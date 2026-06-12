@@ -170,10 +170,6 @@ export default function AdvertisePage() {
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section
         className="relative pt-24 pb-20 px-4 overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 55% at 50% 0%, rgba(249,115,22,0.14) 0%, transparent 65%), #0a0a0f",
-        }}
       >
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-semibold mb-8">
@@ -227,7 +223,7 @@ export default function AdvertisePage() {
       </section>
 
       {/* ── WHY SPONSOR FANRUSH ───────────────────────────────────────────── */}
-      <section className="py-20 bg-[#12121a]">
+      <section className="py-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-block w-12 h-1 bg-orange-500 rounded-full mb-4" />
@@ -252,7 +248,7 @@ export default function AdvertisePage() {
       </section>
 
       {/* ── SPONSOR PACKAGES ──────────────────────────────────────────────── */}
-      <section id="packages" className="py-20 bg-[#0a0a0f]">
+      <section id="packages" className="py-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-block w-12 h-1 bg-orange-500 rounded-full mb-4" />
@@ -344,7 +340,7 @@ export default function AdvertisePage() {
       </section>
 
       {/* ── EXAMPLE PLACEMENTS ────────────────────────────────────────────── */}
-      <section className="py-20 bg-[#12121a]">
+      <section className="py-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-block w-12 h-1 bg-orange-500 rounded-full mb-4" />
@@ -400,10 +396,6 @@ export default function AdvertisePage() {
       <section
         id="contact"
         className="py-20 px-4 relative overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 60% at 50% 100%, rgba(249,115,22,0.10) 0%, transparent 60%), #0a0a0f",
-        }}
       >
         <div className="max-w-2xl mx-auto text-center">
           <div className="inline-block w-12 h-1 bg-orange-500 rounded-full mb-6" />
