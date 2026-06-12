@@ -18,10 +18,7 @@ export default function AppShell({
   rightElement,
 }: AppShellProps) {
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: "linear-gradient(180deg, #12121f 0%, #0a0a0f 280px)" }}
-    >
+    <div className="min-h-screen flex flex-col">
       <Header title={title} showBack={showBack} rightElement={rightElement} />
       {/* pb accounts for fixed nav (4rem) + iPhone home-indicator safe area */}
       <main

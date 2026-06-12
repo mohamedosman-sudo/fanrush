@@ -14,7 +14,7 @@ export default function BusinessShell({ title, children }: BusinessShellProps) {
   return (
     <AppShell title={title} showBottomNav={false}>
       <MobileAdminNav title="Business" links={BUSINESS_NAV_LINKS} />
-      <div className="flex min-h-screen bg-[#0a0a0f]">
+      <div className="flex min-h-screen">
         <div className="hidden md:block flex-shrink-0">
           <BusinessSidebar />
         </div>

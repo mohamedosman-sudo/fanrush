@@ -37,7 +37,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col">
         <GlobalWaveBackground />
-        <Providers>{children}</Providers>
+        <div className="relative z-10 min-h-full flex flex-col">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   )

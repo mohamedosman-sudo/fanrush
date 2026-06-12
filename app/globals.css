@@ -17,25 +17,27 @@
  *     crowd silhouette div.
  * ────────────────────────────────────────────────────────────────────────── */
 
-/* Base dark colour lives on html so it always fills the viewport */
+/* Fallback dark colour — wave provides its own gradient but this prevents
+   any flash on slow paints */
 html {
-  background-color: #030712;
+  background-color: #060810;
 }
 
 .fanrush-wave-bg {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   overflow: hidden;
 
-  /* Static radial glows — stadium-lights / orange sunset top-right,
+  /* Dark base + radial glows — stadium-lights / orange sunset top-right,
      cool blue bottom-left, faint amber top-left corner */
-  background-image:
-    radial-gradient(ellipse at 78% 4%,  rgba(249, 115,  22, 0.13) 0%, transparent 52%),
-    radial-gradient(ellipse at 22% 96%, rgba( 59, 130, 246, 0.09) 0%, transparent 50%),
-    radial-gradient(ellipse at 12% 3%,  rgba(251, 191,  36, 0.05) 0%, transparent 38%),
-    radial-gradient(ellipse at 50% 50%, rgba(249, 115,  22, 0.03) 0%, transparent 65%);
+  background:
+    radial-gradient(circle at 78% 4%,   rgba(249, 115,  22, 0.28) 0%, transparent 32rem),
+    radial-gradient(circle at 22% 96%,  rgba( 59, 130, 246, 0.20) 0%, transparent 28rem),
+    radial-gradient(circle at 12% 3%,   rgba(251, 191,  36, 0.14) 0%, transparent 22rem),
+    radial-gradient(circle at 50% 50%,  rgba(249, 115,  22, 0.08) 0%, transparent 40rem),
+    linear-gradient(180deg, #0d0f1a 0%, #060810 100%);
 }
 
 /* Wave ribbon 1 — warm orange sweep */
@@ -45,11 +47,11 @@ html {
   inset: -25% -15%;
   background: linear-gradient(
     162deg,
-    transparent         28%,
-    rgba(249,115,22, 0.058) 43%,
-    rgba(251,146,60, 0.044) 50%,
-    rgba(249,115,22, 0.058) 57%,
-    transparent         70%
+    transparent            28%,
+    rgba(249,115,22, 0.18) 43%,
+    rgba(251,146,60, 0.13) 50%,
+    rgba(249,115,22, 0.18) 57%,
+    transparent            70%
   );
   animation: fanrush-wave-drift 24s ease-in-out infinite alternate;
   will-change: transform;
@@ -62,11 +64,11 @@ html {
   inset: -25% -15%;
   background: linear-gradient(
     18deg,
-    transparent        22%,
-    rgba(59,130,246, 0.042) 38%,
-    rgba(96,165,250, 0.032) 50%,
-    rgba(59,130,246, 0.042) 62%,
-    transparent        74%
+    transparent            22%,
+    rgba(59,130,246, 0.13) 38%,
+    rgba(96,165,250, 0.10) 50%,
+    rgba(59,130,246, 0.13) 62%,
+    transparent            74%
   );
   animation: fanrush-wave-drift2 30s ease-in-out infinite alternate;
   will-change: transform;
@@ -80,9 +82,9 @@ html {
   right: 0;
   height: 42%;
   background:
-    radial-gradient(ellipse 130% 65% at  28% 100%, rgba(249,115,22,0.045) 0%, transparent 70%),
-    radial-gradient(ellipse 130% 65% at  72% 100%, rgba(251,191,36,0.030) 0%, transparent 70%),
-    linear-gradient(to top, rgba(249,115,22,0.028) 0%, transparent 100%);
+    radial-gradient(ellipse 130% 65% at  28% 100%, rgba(249,115,22,0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 130% 65% at  72% 100%, rgba(251,191,36,0.10) 0%, transparent 70%),
+    linear-gradient(to top, rgba(249,115,22,0.09) 0%, transparent 100%);
 }
 
 /* ── Keyframes ─────────────────────────────────────────────────────────────── */
@@ -110,14 +112,15 @@ html {
 
 @media (max-width: 767px) {
   .fanrush-wave-bg {
-    background-image:
-      radial-gradient(ellipse at 78% 4%,  rgba(249,115, 22, 0.08) 0%, transparent 52%),
-      radial-gradient(ellipse at 22% 96%, rgba( 59,130,246, 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 12% 3%,  rgba(251,191, 36, 0.03) 0%, transparent 38%);
+    background:
+      radial-gradient(circle at 78% 4%,   rgba(249,115, 22, 0.18) 0%, transparent 22rem),
+      radial-gradient(circle at 22% 96%,  rgba( 59,130,246, 0.14) 0%, transparent 18rem),
+      radial-gradient(circle at 12% 3%,   rgba(251,191, 36, 0.09) 0%, transparent 14rem),
+      linear-gradient(180deg, #0d0f1a 0%, #060810 100%);
   }
-  .fanrush-wave-bg::before { opacity: 0.45; }
-  .fanrush-wave-bg::after  { opacity: 0.40; }
-  .fanrush-wave-crowd      { opacity: 0.55; }
+  .fanrush-wave-bg::before { opacity: 0.55; }
+  .fanrush-wave-bg::after  { opacity: 0.50; }
+  .fanrush-wave-crowd      { opacity: 0.65; }
 }
 
 @theme inline {

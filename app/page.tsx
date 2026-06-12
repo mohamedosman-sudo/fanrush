@@ -9,7 +9,7 @@ const featuredVenues = mockVenues
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen text-white">
       {/* ── HEADER ──────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -123,7 +123,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ────────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#0a0a0f]">
+      <section className="py-24">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-14">
             <div className="inline-block w-12 h-1 bg-orange-500 rounded-full mb-4" />
@@ -223,7 +223,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURED WATCH PARTIES ──────────────────────────────────────── */}
-      <section className="py-24 bg-[#0a0a0f]">
+      <section className="py-24">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-end justify-between mb-10">
             <div>
@@ -349,7 +349,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOR BUSINESSES ──────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#0a0a0f]">
+      <section className="py-24">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-14 items-start">
             {/* Left: benefits */}
@@ -509,7 +509,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/10 bg-[#0a0a0f] py-16">
+      <footer className="border-t border-white/10 py-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-start justify-between gap-12 mb-12">
             {/* Brand */}
