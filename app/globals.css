@@ -86,21 +86,21 @@ html {
 }
 
 .stadium-bg__wave-group--orange {
-  animation: stadium-wave-drift 28s ease-in-out infinite alternate;
+  animation: stadium-wave-drift 16s ease-in-out infinite alternate;
 }
 
 .stadium-bg__wave-group--blue {
-  animation: stadium-wave-drift-reverse 34s ease-in-out infinite alternate;
+  animation: stadium-wave-drift-reverse 20s ease-in-out infinite alternate;
 }
 
 @keyframes stadium-wave-drift {
-  from { transform: translate3d(-5.5%, 0, 0); }
-  to { transform: translate3d(5.5%, 0, 0); }
+  from { transform: translate3d(-7%, 0, 0); }
+  to { transform: translate3d(7%, 0, 0); }
 }
 
 @keyframes stadium-wave-drift-reverse {
-  from { transform: translate3d(5%, 0, 0); }
-  to { transform: translate3d(-5%, 0, 0); }
+  from { transform: translate3d(6.5%, 0, 0); }
+  to { transform: translate3d(-6.5%, 0, 0); }
 }
 
 @media (max-width: 767px) {

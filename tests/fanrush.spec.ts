@@ -1003,13 +1003,17 @@ test.describe("Logo routing — mode-aware navigation", () => {
     expect(src).toContain("Back to App")
   })
 
-  test("AccountMenu still has Public Landing Page link → /", async () => {
+  test("AccountMenu has role-specific settings links", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
       "utf-8"
     )
-    expect(src).toContain('href="/"')
-    expect(src).toMatch(/[Pp]ublic [Ll]anding/)
+    expect(src).toContain('"/settings"')
+    expect(src).toContain('"Account Settings"')
+    expect(src).toContain('"/business/settings"')
+    expect(src).toContain('"Business Settings"')
+    expect(src).toContain('"/admin/settings"')
+    expect(src).toContain('"Admin Settings"')
   })
 
   test("BusinessShell centralises showBottomNav={false}, MobileAdminNav and BusinessSidebar", async () => {
@@ -1306,13 +1310,17 @@ test.describe("AccountMenu role shortcuts", () => {
     expect(src).toContain('"Launch Checklist"')
   })
 
-  test("AccountMenu has Fan App link for elevated roles", async () => {
+  test("AccountMenu has settings links for each role", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
       "utf-8"
     )
-    expect(src).toContain('"Fan App"')
-    expect(src).toContain('"/home"')
+    expect(src).toContain('"Business Settings"')
+    expect(src).toContain('"/business/settings"')
+    expect(src).toContain('"Admin Settings"')
+    expect(src).toContain('"/admin/settings"')
+    expect(src).toContain('"Account Settings"')
+    expect(src).toContain('"/settings"')
   })
 })
 
@@ -1456,8 +1464,8 @@ test.describe("Stadium wave background", () => {
     expect(src).toContain(".stadium-bg__waves")
     expect(src).not.toContain(".stadium-bg__crowd")
     expect(src).toContain("@keyframes stadium-wave-drift")
-    expect(src).toContain("28s ease-in-out infinite alternate")
-    expect(src).toContain("34s ease-in-out infinite alternate")
+    expect(src).toContain("16s ease-in-out infinite alternate")
+    expect(src).toContain("20s ease-in-out infinite alternate")
     expect(src).toContain("prefers-reduced-motion")
     expect(src).toContain("animation: none")
   })
@@ -1553,16 +1561,15 @@ test.describe("Stadium wave background", () => {
     expect(src).toContain('pathname?.startsWith("/admin")')
   })
 
-  test("AccountMenu admin section has Fan App and Public Landing links", async () => {
+  test("AccountMenu admin section has Dashboard, Launch Checklist and Admin Settings", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
       "utf-8"
     )
     expect(src).toContain('role === "admin"')
     expect(src).toContain("/admin/launch")
-    expect(src).toContain("/home")
-    // Admin section should have Public Landing
-    expect(src).toContain('"/"')
+    expect(src).toContain("/admin/settings")
+    expect(src).toContain('"Admin Settings"')
   })
 
   test("AccountMenu business section has Pricing link", async () => {
@@ -1572,5 +1579,73 @@ test.describe("Stadium wave background", () => {
     )
     expect(src).toContain('role === "business"')
     expect(src).toContain("/business/pricing")
+  })
+
+  test("AccountMenu business section does not include Fan App or Public Landing", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    // The business section should not duplicate sidebar back-links
+    expect(src).not.toContain('"Fan App"')
+    expect(src).not.toContain('"Public Landing"')
+  })
+})
+
+// ─── Settings pages ───────────────────────────────────────────────────────────
+
+test.describe("Settings pages", () => {
+  test("/settings page exists and uses AppShell", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/settings/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("AppShell")
+    expect(src).toContain("Account Settings")
+    expect(src).toContain("display_name")
+  })
+
+  test("/business/settings page exists and uses BusinessShell", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/settings/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("BusinessShell")
+    expect(src).toContain("Business Settings")
+    expect(src).toContain("display_name")
+  })
+
+  test("/admin/settings page exists and uses AdminShell", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/settings/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("AdminShell")
+    expect(src).toContain("Admin Settings")
+    expect(src).toContain("display_name")
+  })
+
+  test("settings pages handle missing profile data without crashing", async () => {
+    for (const pagePath of [
+      "/Users/mohamed/Desktop/Projects/fanrush/app/settings/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/settings/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/admin/settings/page.tsx",
+    ]) {
+      const src = fs.readFileSync(pagePath, "utf-8")
+      // All profile accesses must be null-safe
+      expect(src).toMatch(/display_name\s*\?\?/)
+      expect(src).toContain("catch")
+    }
+  })
+
+  test("wave animation durations are perceptible (16s and 20s)", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
+      "utf-8"
+    )
+    expect(src).toContain("16s ease-in-out infinite alternate")
+    expect(src).toContain("20s ease-in-out infinite alternate")
+    expect(src).not.toContain("28s ease-in-out infinite alternate")
+    expect(src).not.toContain("34s ease-in-out infinite alternate")
   })
 })
