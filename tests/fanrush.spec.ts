@@ -1504,9 +1504,9 @@ test.describe("Stadium wave background", () => {
     expect(src).toContain("background-color: #050712")
   })
 
-  test("the supplied stadium image asset exists", async () => {
+  test("the supplied clean stadium image asset exists", async () => {
     expect(fs.existsSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/public/backgrounds/fanrush-stadium-wave.png"
+      "/Users/mohamed/Desktop/Projects/fanrush/public/backgrounds/fanrush-stadium-clean.png"
     )).toBe(true)
   })
 
