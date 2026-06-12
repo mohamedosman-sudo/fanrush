@@ -1124,7 +1124,7 @@ test.describe("Business analytics page", () => {
 // ─── Business nav — shared constant + all pages ───────────────────────────────
 
 test.describe("Business nav — shared constant", () => {
-  test("BUSINESS_NAV_LINKS constant includes all four nav items", async () => {
+  test("BUSINESS_NAV_LINKS constant includes all five nav items including Pricing", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/lib/business-nav-links.ts",
       "utf-8"
@@ -1133,6 +1133,7 @@ test.describe("Business nav — shared constant", () => {
     expect(src).toContain('"/business/add-venue"')
     expect(src).toContain('"/business/add-event"')
     expect(src).toContain('"/business/analytics"')
+    expect(src).toContain('"/business/pricing"')
   })
 
   const allBusinessPages = [
@@ -1142,6 +1143,7 @@ test.describe("Business nav — shared constant", () => {
     "/Users/mohamed/Desktop/Projects/fanrush/app/business/venues/[id]/edit/page.tsx",
     "/Users/mohamed/Desktop/Projects/fanrush/app/business/events/[id]/edit/page.tsx",
     "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+    "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
   ]
 
   for (const pagePath of allBusinessPages) {
@@ -1178,5 +1180,123 @@ test.describe("Business load — error vs empty state", () => {
     expect(src).toContain("setLoadMode(\"error\")")
     // Null data without error → empty, not error
     expect(src).toContain("setLoadMode(\"empty\")")
+  })
+
+  test("business page empty states are gated on !hasError", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "utf-8"
+    )
+    // Both empty states guard on !hasError to avoid dual banner + empty state
+    expect(src).toContain("!usingPreview && !hasError && displayVenues.length === 0")
+    expect(src).toContain("!usingPreview && !hasError && displayEvents.length === 0")
+  })
+})
+
+// ─── Login reliability — window.location.href hard redirect ───────────────────
+
+test.describe("Login reliability — hard redirect", () => {
+  test("login page uses window.location.href for post-sign-in redirect", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/login/page.tsx",
+      "utf-8"
+    )
+    // Hard redirect ensures session cookies are committed before Next.js loads the next page
+    expect(src).toContain("window.location.href")
+    const windowLocationCount = (src.match(/window\.location\.href/g) ?? []).length
+    // returnTo path + /admin + /business + /home = at least 4 hard redirects
+    expect(windowLocationCount).toBeGreaterThanOrEqual(4)
+    // Signed-in paths must not use router.push (demo mode button is the only exception)
+    expect(src).not.toContain("router.push(\"/admin\")")
+    expect(src).not.toContain("router.push(\"/business\")")
+    expect(src).not.toContain("router.push(returnTo)")
+  })
+})
+
+// ─── Business pricing page ────────────────────────────────────────────────────
+
+test.describe("Business pricing page", () => {
+  test("/business/pricing page file exists", async () => {
+    const exists = fs.existsSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx"
+    )
+    expect(exists).toBe(true)
+  })
+
+  test("/business/pricing uses BusinessSidebar", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("BusinessSidebar")
+  })
+
+  test("/business/pricing uses MobileAdminNav with BUSINESS_NAV_LINKS", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("MobileAdminNav")
+    expect(src).toContain("BUSINESS_NAV_LINKS")
+  })
+
+  test("/business/pricing does not show fan BottomNav", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/pricing/page.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("showBottomNav={false}")
+  })
+
+  test("See Pricing links in business pages point to /business/pricing", async () => {
+    const pages = [
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/page.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/app/business/analytics/page.tsx",
+    ]
+    for (const p of pages) {
+      const src = fs.readFileSync(p, "utf-8")
+      expect(src).not.toContain('href="/pricing"')
+      expect(src).toContain('href="/business/pricing"')
+    }
+  })
+
+  test("BusinessSidebar Upgrade link points to /business/pricing", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/BusinessSidebar.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('href="/business/pricing"')
+    expect(src).not.toContain('href="/pricing"')
+  })
+})
+
+// ─── AccountMenu role shortcuts ───────────────────────────────────────────────
+
+test.describe("AccountMenu role shortcuts", () => {
+  test("AccountMenu has Analytics link for business role", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"/business/analytics"')
+    expect(src).toContain('"Analytics"')
+  })
+
+  test("AccountMenu has Launch Checklist link for admin role", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"/admin/launch"')
+    expect(src).toContain('"Launch Checklist"')
+  })
+
+  test("AccountMenu has Fan App link for elevated roles", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/AccountMenu.tsx",
+      "utf-8"
+    )
+    expect(src).toContain('"Fan App"')
+    expect(src).toContain('"/home"')
   })
 })

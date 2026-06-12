@@ -94,7 +94,7 @@ export default function BusinessSidebar() {
           </svg>
           Back to App
         </Link>
-        <Link href="/pricing" className="text-xs text-orange-400 font-semibold hover:text-orange-300 transition-colors px-3">
+        <Link href="/business/pricing" className="text-xs text-orange-400 font-semibold hover:text-orange-300 transition-colors px-3">
           Upgrade to Premium →
         </Link>
       </div>

@@ -67,7 +67,7 @@ function LoginForm() {
 
       // If a safe return path was provided, always honour it regardless of role.
       if (returnTo) {
-        router.push(returnTo)
+        window.location.href = returnTo
         return
       }
 
@@ -81,11 +81,11 @@ function LoginForm() {
           .single()
 
         const role = profile?.role ?? "fan"
-        if (role === "admin") router.push("/admin")
-        else if (role === "business") router.push("/business")
-        else router.push("/home")
+        if (role === "admin") window.location.href = "/admin"
+        else if (role === "business") window.location.href = "/business"
+        else window.location.href = "/home"
       } else {
-        router.push("/home")
+        window.location.href = "/home"
       }
     } catch {
       setError("Something went wrong. Please try again.")

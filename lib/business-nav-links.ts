@@ -3,4 +3,5 @@ export const BUSINESS_NAV_LINKS = [
   { label: "Add Venue", href: "/business/add-venue" },
   { label: "Add Event", href: "/business/add-event" },
   { label: "Analytics", href: "/business/analytics" },
+  { label: "Pricing", href: "/business/pricing" },
 ]
