@@ -5,6 +5,121 @@
   --foreground: #f9fafb;
 }
 
+/* ── FanRush Wave Background ──────────────────────────────────────────────────
+ *
+ * Layering strategy
+ * -----------------
+ * html   → background: #030712  (dark base, always visible)
+ * body   → background: transparent (lets html base show through)
+ * .fanrush-wave-bg  → position: fixed; z-index: -1
+ *     Sits above html background but below all body content.
+ *     Children are two animated wave ribbons (::before, ::after) plus a
+ *     crowd silhouette div.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* Base dark colour lives on html so it always fills the viewport */
+html {
+  background-color: #030712;
+}
+
+.fanrush-wave-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+
+  /* Static radial glows — stadium-lights / orange sunset top-right,
+     cool blue bottom-left, faint amber top-left corner */
+  background-image:
+    radial-gradient(ellipse at 78% 4%,  rgba(249, 115,  22, 0.13) 0%, transparent 52%),
+    radial-gradient(ellipse at 22% 96%, rgba( 59, 130, 246, 0.09) 0%, transparent 50%),
+    radial-gradient(ellipse at 12% 3%,  rgba(251, 191,  36, 0.05) 0%, transparent 38%),
+    radial-gradient(ellipse at 50% 50%, rgba(249, 115,  22, 0.03) 0%, transparent 65%);
+}
+
+/* Wave ribbon 1 — warm orange sweep */
+.fanrush-wave-bg::before {
+  content: "";
+  position: absolute;
+  inset: -25% -15%;
+  background: linear-gradient(
+    162deg,
+    transparent         28%,
+    rgba(249,115,22, 0.058) 43%,
+    rgba(251,146,60, 0.044) 50%,
+    rgba(249,115,22, 0.058) 57%,
+    transparent         70%
+  );
+  animation: fanrush-wave-drift 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Wave ribbon 2 — cool blue counter-sweep */
+.fanrush-wave-bg::after {
+  content: "";
+  position: absolute;
+  inset: -25% -15%;
+  background: linear-gradient(
+    18deg,
+    transparent        22%,
+    rgba(59,130,246, 0.042) 38%,
+    rgba(96,165,250, 0.032) 50%,
+    rgba(59,130,246, 0.042) 62%,
+    transparent        74%
+  );
+  animation: fanrush-wave-drift2 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Crowd silhouette — warm ambient glow pooling at the bottom third */
+.fanrush-wave-crowd {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 42%;
+  background:
+    radial-gradient(ellipse 130% 65% at  28% 100%, rgba(249,115,22,0.045) 0%, transparent 70%),
+    radial-gradient(ellipse 130% 65% at  72% 100%, rgba(251,191,36,0.030) 0%, transparent 70%),
+    linear-gradient(to top, rgba(249,115,22,0.028) 0%, transparent 100%);
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
+
+@keyframes fanrush-wave-drift {
+  0%   { transform: translateX(-12%) translateY(4%); }
+  100% { transform: translateX( 12%) translateY(-4%); }
+}
+
+@keyframes fanrush-wave-drift2 {
+  0%   { transform: translateX( 9%) translateY(-5%); }
+  100% { transform: translateX(-9%) translateY( 5%); }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .fanrush-wave-bg::before,
+  .fanrush-wave-bg::after {
+    animation: none;
+  }
+}
+
+/* ── Mobile — subtler glows, half-opacity waves ────────────────────────────── */
+
+@media (max-width: 767px) {
+  .fanrush-wave-bg {
+    background-image:
+      radial-gradient(ellipse at 78% 4%,  rgba(249,115, 22, 0.08) 0%, transparent 52%),
+      radial-gradient(ellipse at 22% 96%, rgba( 59,130,246, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 12% 3%,  rgba(251,191, 36, 0.03) 0%, transparent 38%);
+  }
+  .fanrush-wave-bg::before { opacity: 0.45; }
+  .fanrush-wave-bg::after  { opacity: 0.40; }
+  .fanrush-wave-crowd      { opacity: 0.55; }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -13,7 +128,8 @@
 }
 
 body {
-  background: var(--background);
+  /* Transparent — dark base is on <html>; wave background is the fixed layer */
+  background: transparent;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }

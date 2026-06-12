@@ -1365,3 +1365,89 @@ test.describe("Business portal shell consistency", () => {
     expect(src).toContain("Back to App")
   })
 })
+
+// ─── Global wave background ───────────────────────────────────────────────────
+
+test.describe("Global wave background", () => {
+  test("GlobalWaveBackground component file exists", async () => {
+    const exists = fs.existsSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalWaveBackground.tsx"
+    )
+    expect(exists).toBe(true)
+  })
+
+  test("GlobalWaveBackground renders fanrush-wave-bg and fanrush-wave-crowd", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalWaveBackground.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("fanrush-wave-bg")
+    expect(src).toContain("fanrush-wave-crowd")
+    expect(src).toContain('aria-hidden="true"')
+  })
+
+  test("GlobalWaveBackground is mounted in root layout", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/layout.tsx",
+      "utf-8"
+    )
+    expect(src).toContain("GlobalWaveBackground")
+  })
+
+  test("globals.css defines fanrush-wave-bg with fixed positioning and z-index: -1", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
+      "utf-8"
+    )
+    expect(src).toContain("fanrush-wave-bg")
+    expect(src).toContain("position: fixed")
+    expect(src).toContain("z-index: -1")
+    expect(src).toContain("pointer-events: none")
+  })
+
+  test("globals.css defines wave drift keyframes for animation", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
+      "utf-8"
+    )
+    expect(src).toContain("fanrush-wave-drift")
+    expect(src).toContain("@keyframes")
+  })
+
+  test("globals.css respects prefers-reduced-motion", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
+      "utf-8"
+    )
+    expect(src).toContain("prefers-reduced-motion")
+    expect(src).toContain("animation: none")
+  })
+
+  test("globals.css has mobile breakpoint for subtler wave on small screens", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
+      "utf-8"
+    )
+    expect(src).toContain("max-width: 767px")
+    // Mobile reduces opacity of wave ribbons
+    expect(src).toMatch(/fanrush-wave-bg::before\s*\{[^}]*opacity/)
+  })
+
+  test("body background is transparent to allow wave layer to show", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
+      "utf-8"
+    )
+    // body background must be transparent (dark base is on html)
+    expect(src).toMatch(/body\s*\{[^}]*background:\s*transparent/)
+  })
+
+  test("html element provides dark base colour", async () => {
+    const src = fs.readFileSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
+      "utf-8"
+    )
+    expect(src).toContain("html {")
+    expect(src).toContain("background-color: #030712")
+  })
+})
