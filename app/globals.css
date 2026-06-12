@@ -11,35 +11,39 @@ html {
 }
 
 .stadium-bg {
-  --stadium-image-opacity: 0.75;
-  --stadium-line-opacity: 0.55;
-  --stadium-overlay-opacity: 0.52;
+  --stadium-image-opacity: 0.82;
+  --stadium-line-opacity: 0.60;
+  --stadium-overlay-opacity: 0.44;
   background: #050712;
   contain: strict;
 }
 
+/* PUBLIC — strongest atmosphere, premium landing feel */
 .stadium-bg[data-mode="public"] {
-  --stadium-image-opacity: 0.75;
-  --stadium-line-opacity: 0.55;
-  --stadium-overlay-opacity: 0.52;
+  --stadium-image-opacity: 0.82;
+  --stadium-line-opacity: 0.60;
+  --stadium-overlay-opacity: 0.44;
 }
 
+/* FAN — strong but content-forward */
 .stadium-bg[data-mode="fan"] {
-  --stadium-image-opacity: 0.62;
-  --stadium-line-opacity: 0.45;
-  --stadium-overlay-opacity: 0.6;
+  --stadium-image-opacity: 0.70;
+  --stadium-line-opacity: 0.50;
+  --stadium-overlay-opacity: 0.50;
 }
 
+/* BUSINESS — subtly branded, still readable forms */
 .stadium-bg[data-mode="business"] {
-  --stadium-image-opacity: 0.32;
-  --stadium-line-opacity: 0.22;
-  --stadium-overlay-opacity: 0.62;
+  --stadium-image-opacity: 0.40;
+  --stadium-line-opacity: 0.26;
+  --stadium-overlay-opacity: 0.56;
 }
 
+/* ADMIN — very subtle, console feel, still not plain black */
 .stadium-bg[data-mode="admin"] {
-  --stadium-image-opacity: 0.22;
-  --stadium-line-opacity: 0.14;
-  --stadium-overlay-opacity: 0.72;
+  --stadium-image-opacity: 0.28;
+  --stadium-line-opacity: 0.16;
+  --stadium-overlay-opacity: 0.66;
 }
 
 .stadium-bg__image,
@@ -125,6 +129,10 @@ body {
   background: transparent;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* Sharpen text rendering against the image background */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 * {

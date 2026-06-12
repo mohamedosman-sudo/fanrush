@@ -1471,10 +1471,10 @@ test.describe("Stadium wave background", () => {
     expect(src).toContain('data-mode="fan"')
     expect(src).toContain('data-mode="business"')
     expect(src).toContain('data-mode="admin"')
-    expect(src).toMatch(/data-mode="public"[\s\S]*?--stadium-image-opacity:\s*0\.75[\s\S]*?--stadium-line-opacity:\s*0\.55/)
-    expect(src).toMatch(/data-mode="fan"[\s\S]*?--stadium-image-opacity:\s*0\.62[\s\S]*?--stadium-line-opacity:\s*0\.45/)
-    expect(src).toMatch(/data-mode="business"[\s\S]*?--stadium-image-opacity:\s*0\.32[\s\S]*?--stadium-line-opacity:\s*0\.22/)
-    expect(src).toMatch(/data-mode="admin"[\s\S]*?--stadium-image-opacity:\s*0\.22[\s\S]*?--stadium-line-opacity:\s*0\.14/)
+    expect(src).toMatch(/data-mode="public"[\s\S]*?--stadium-image-opacity:\s*0\.82[\s\S]*?--stadium-line-opacity:\s*0\.60/)
+    expect(src).toMatch(/data-mode="fan"[\s\S]*?--stadium-image-opacity:\s*0\.70[\s\S]*?--stadium-line-opacity:\s*0\.50/)
+    expect(src).toMatch(/data-mode="business"[\s\S]*?--stadium-image-opacity:\s*0\.40[\s\S]*?--stadium-line-opacity:\s*0\.26/)
+    expect(src).toMatch(/data-mode="admin"[\s\S]*?--stadium-image-opacity:\s*0\.28[\s\S]*?--stadium-line-opacity:\s*0\.16/)
   })
 
   test("globals.css has mobile breakpoint for subtler backgrounds on small screens", async () => {
