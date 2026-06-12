@@ -108,6 +108,18 @@ async function resolveRole(
 // Proxy
 // ---------------------------------------------------------------------------
 export async function proxy(request: NextRequest) {
+  try {
+    return await _proxyInner(request)
+  } catch (err) {
+    // Fail open: if the proxy itself crashes (e.g. Supabase unreachable at
+    // startup), let the request through rather than returning an empty/500
+    // response that Chrome shows as "This page couldn't load".
+    console.error("[proxy] unhandled crash — failing open", err)
+    return NextResponse.next({ request })
+  }
+}
+
+async function _proxyInner(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const pathname = request.nextUrl.pathname
@@ -203,11 +215,25 @@ export async function proxy(request: NextRequest) {
       role !== "business" &&
       role !== "admin"
 
-    if (adminBlocked || businessBlocked) {
+    // If the DB lookup itself errored (network issue, service key problem),
+    // do NOT block an authenticated user — redirect to unauthorized only
+    // when we have a confirmed mismatched role, not when we hit an error.
+    const dbLookupFailed =
+      role === "__fetch_error__" || role === "__unexpected_role__"
+
+    if (!dbLookupFailed && (adminBlocked || businessBlocked)) {
       devLog("access denied", { userId: user.id, role, pathname })
       const url = request.nextUrl.clone()
       url.pathname = "/unauthorized"
       return NextResponse.redirect(url)
+    }
+
+    if (dbLookupFailed) {
+      devLog("role lookup failed — failing open for authenticated user", {
+        userId: user.id,
+        role,
+        pathname,
+      })
     }
   }
 

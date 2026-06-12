@@ -80,12 +80,12 @@ export default function BusinessAnalyticsPage() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setRows((data as any[]).map((v) => ({
-          venueId: v.id,
-          venueName: v.name,
-          views: v.views ?? 0,
-          clicks: v.clicks ?? 0,
-          saves: v.saves ?? 0,
-          bookings: v.bookings ?? 0,
+          venueId: v.id as string,
+          venueName: (v.name as string) ?? "Unnamed Venue",
+          views: (v.views as number | null) ?? 0,
+          clicks: (v.clicks as number | null) ?? 0,
+          saves: (v.saves as number | null) ?? 0,
+          bookings: (v.bookings as number | null) ?? 0,
         })))
         setLoadMode("live")
       } catch (err) {
@@ -125,7 +125,7 @@ export default function BusinessAnalyticsPage() {
 
             {/* Error */}
             {loadMode === "error" && (
-              <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-3">
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3">
                 <p className="text-red-300 text-sm font-semibold">
                   Unable to load analytics. Check your connection and try refreshing.
                 </p>
