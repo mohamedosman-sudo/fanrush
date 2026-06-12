@@ -1458,14 +1458,14 @@ test.describe("Stadium wave background", () => {
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
     )
-    expect(src).toContain('background-image: url("/backgrounds/fanrush-stadium-clean.png")')
+    expect(src).toContain('background-image: url("/backgrounds/fanrush-stadium-v2.png")')
     expect(src).toContain("background-size: cover")
     expect(src).toContain(".stadium-bg__overlay")
     expect(src).toContain(".stadium-bg__waves")
     expect(src).not.toContain(".stadium-bg__crowd")
     expect(src).toContain("@keyframes stadium-wave-drift")
-    expect(src).toContain("16s ease-in-out infinite alternate")
-    expect(src).toContain("20s ease-in-out infinite alternate")
+    expect(src).toContain("8s ease-in-out infinite alternate")
+    expect(src).toContain("10s ease-in-out infinite alternate")
     expect(src).toContain("prefers-reduced-motion")
     expect(src).toContain("animation: none")
   })
@@ -1479,10 +1479,10 @@ test.describe("Stadium wave background", () => {
     expect(src).toContain('data-mode="fan"')
     expect(src).toContain('data-mode="business"')
     expect(src).toContain('data-mode="admin"')
-    expect(src).toMatch(/data-mode="public"[\s\S]*?--stadium-image-opacity:\s*0\.92[\s\S]*?--stadium-line-opacity:\s*0\.70/)
-    expect(src).toMatch(/data-mode="fan"[\s\S]*?--stadium-image-opacity:\s*0\.84[\s\S]*?--stadium-line-opacity:\s*0\.62/)
-    expect(src).toMatch(/data-mode="business"[\s\S]*?--stadium-image-opacity:\s*0\.48[\s\S]*?--stadium-line-opacity:\s*0\.30/)
-    expect(src).toMatch(/data-mode="admin"[\s\S]*?--stadium-image-opacity:\s*0\.36[\s\S]*?--stadium-line-opacity:\s*0\.20/)
+    expect(src).toMatch(/data-mode="public"[\s\S]*?--stadium-image-opacity:\s*0\.95[\s\S]*?--stadium-line-opacity:\s*0\.82/)
+    expect(src).toMatch(/data-mode="fan"[\s\S]*?--stadium-image-opacity:\s*0\.90[\s\S]*?--stadium-line-opacity:\s*0\.75/)
+    expect(src).toMatch(/data-mode="business"[\s\S]*?--stadium-image-opacity:\s*0\.60[\s\S]*?--stadium-line-opacity:\s*0\.45/)
+    expect(src).toMatch(/data-mode="admin"[\s\S]*?--stadium-image-opacity:\s*0\.45[\s\S]*?--stadium-line-opacity:\s*0\.32/)
   })
 
   test("globals.css has mobile breakpoint for subtler backgrounds on small screens", async () => {
@@ -1512,9 +1512,9 @@ test.describe("Stadium wave background", () => {
     expect(src).toContain("background-color: #050712")
   })
 
-  test("the supplied clean stadium image asset exists", async () => {
+  test("the stadium background image asset exists", async () => {
     expect(fs.existsSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/public/backgrounds/fanrush-stadium-clean.png"
+      "/Users/mohamed/Desktop/Projects/fanrush/public/backgrounds/fanrush-stadium-v2.png"
     )).toBe(true)
   })
 
@@ -1638,13 +1638,13 @@ test.describe("Settings pages", () => {
     }
   })
 
-  test("wave animation durations are perceptible (16s and 20s)", async () => {
+  test("wave animation durations are fast and perceptible (8s and 10s)", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
     )
-    expect(src).toContain("16s ease-in-out infinite alternate")
-    expect(src).toContain("20s ease-in-out infinite alternate")
+    expect(src).toContain("8s ease-in-out infinite alternate")
+    expect(src).toContain("10s ease-in-out infinite alternate")
     expect(src).not.toContain("28s ease-in-out infinite alternate")
     expect(src).not.toContain("34s ease-in-out infinite alternate")
   })
