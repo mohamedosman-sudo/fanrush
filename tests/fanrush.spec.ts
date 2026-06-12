@@ -1388,29 +1388,42 @@ test.describe("Business portal shell consistency", () => {
 
 // ─── Global background (route-aware) ─────────────────────────────────────────
 
-test.describe("Global background", () => {
-  test("GlobalBackground component file exists", async () => {
+test.describe("Stadium wave background", () => {
+  test("StadiumWaveBackground component file exists and legacy backgrounds do not", async () => {
     const exists = fs.existsSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalBackground.tsx"
+      "/Users/mohamed/Desktop/Projects/fanrush/components/StadiumWaveBackground.tsx"
     )
     expect(exists).toBe(true)
+    expect(fs.existsSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalBackground.tsx"
+    )).toBe(false)
+    expect(fs.existsSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalWaveBackground.tsx"
+    )).toBe(false)
   })
 
-  test("GlobalBackground renders fanrush-bg and fanrush-bg-crowd with data-mode", async () => {
+  test("component renders one fixed z-0 stadium image with waves and data mode", async () => {
     const src = fs.readFileSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalBackground.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/components/StadiumWaveBackground.tsx",
       "utf-8"
     )
-    expect(src).toContain("fanrush-bg")
-    expect(src).toContain("fanrush-bg-crowd")
+    expect(src).toContain("stadium-bg")
+    expect(src).toContain("stadium-bg__image")
+    expect(src).toContain("stadium-bg__overlay")
+    expect(src).toContain("stadium-bg__waves")
+    expect(src).not.toContain("stadium-bg__crowd")
+    expect(src).not.toContain("linearGradient")
+    expect(src).not.toContain("radialGradient")
+    expect(src).toContain("fixed inset-0 z-0 pointer-events-none overflow-hidden")
+    expect(src).not.toContain("-z-")
     expect(src).toContain('aria-hidden="true"')
     expect(src).toContain("data-mode")
     expect(src).toContain("usePathname")
   })
 
-  test("GlobalBackground is route-aware — getMode logic covers all four modes", async () => {
+  test("background is route-aware and covers all four modes", async () => {
     const src = fs.readFileSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/components/GlobalBackground.tsx",
+      "/Users/mohamed/Desktop/Projects/fanrush/components/StadiumWaveBackground.tsx",
       "utf-8"
     )
     expect(src).toContain('"public"')
@@ -1421,27 +1434,35 @@ test.describe("Global background", () => {
     expect(src).toContain('/admin')
   })
 
-  test("GlobalBackground is mounted in root layout", async () => {
+  test("root layout mounts StadiumWaveBackground behind a relative z-10 content wrapper", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/layout.tsx",
       "utf-8"
     )
-    expect(src).toContain("GlobalBackground")
+    expect(src).toContain("StadiumWaveBackground")
+    expect(src).toContain("relative z-10 min-h-screen")
+    expect(src).not.toContain("GlobalBackground")
     expect(src).not.toContain("GlobalWaveBackground")
   })
 
-  test("globals.css defines fanrush-bg with fixed positioning and z-index: 0", async () => {
+  test("globals.css uses the supplied image with waves, animation and reduced motion", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
     )
-    expect(src).toContain("fanrush-bg")
-    expect(src).toContain("position: fixed")
-    expect(src).toContain("z-index: 0")
-    expect(src).toContain("pointer-events: none")
+    expect(src).toContain('background-image: url("/backgrounds/fanrush-stadium-clean.png")')
+    expect(src).toContain("background-size: cover")
+    expect(src).toContain(".stadium-bg__overlay")
+    expect(src).toContain(".stadium-bg__waves")
+    expect(src).not.toContain(".stadium-bg__crowd")
+    expect(src).toContain("@keyframes stadium-wave-drift")
+    expect(src).toContain("28s ease-in-out infinite alternate")
+    expect(src).toContain("34s ease-in-out infinite alternate")
+    expect(src).toContain("prefers-reduced-motion")
+    expect(src).toContain("animation: none")
   })
 
-  test("globals.css defines all four data-mode backgrounds", async () => {
+  test("globals.css defines the requested image and line strengths for all four modes", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
@@ -1450,14 +1471,10 @@ test.describe("Global background", () => {
     expect(src).toContain('data-mode="fan"')
     expect(src).toContain('data-mode="business"')
     expect(src).toContain('data-mode="admin"')
-  })
-
-  test("globals.css respects prefers-reduced-motion", async () => {
-    const src = fs.readFileSync(
-      "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
-      "utf-8"
-    )
-    expect(src).toContain("prefers-reduced-motion")
+    expect(src).toMatch(/data-mode="public"[\s\S]*?--stadium-image-opacity:\s*0\.75[\s\S]*?--stadium-line-opacity:\s*0\.55/)
+    expect(src).toMatch(/data-mode="fan"[\s\S]*?--stadium-image-opacity:\s*0\.62[\s\S]*?--stadium-line-opacity:\s*0\.45/)
+    expect(src).toMatch(/data-mode="business"[\s\S]*?--stadium-image-opacity:\s*0\.22[\s\S]*?--stadium-line-opacity:\s*0\.16/)
+    expect(src).toMatch(/data-mode="admin"[\s\S]*?--stadium-image-opacity:\s*0\.14[\s\S]*?--stadium-line-opacity:\s*0\.08/)
   })
 
   test("globals.css has mobile breakpoint for subtler backgrounds on small screens", async () => {
@@ -1468,13 +1485,14 @@ test.describe("Global background", () => {
     expect(src).toContain("max-width: 767px")
   })
 
-  test("body background is transparent to allow global background layer to show", async () => {
+  test("body remains transparent and no duplicate legacy wave classes remain", async () => {
     const src = fs.readFileSync(
       "/Users/mohamed/Desktop/Projects/fanrush/app/globals.css",
       "utf-8"
     )
-    // body background must be transparent (dark base is on html)
     expect(src).toMatch(/body\s*\{[^}]*background:\s*transparent/)
+    expect(src).not.toContain("fanrush-wave-bg")
+    expect(src).not.toContain("fanrush-bg-")
   })
 
   test("html element provides dark base colour", async () => {
@@ -1483,7 +1501,13 @@ test.describe("Global background", () => {
       "utf-8"
     )
     expect(src).toContain("html {")
-    expect(src).toContain("background-color: #07080f")
+    expect(src).toContain("background-color: #050712")
+  })
+
+  test("the supplied stadium image asset exists", async () => {
+    expect(fs.existsSync(
+      "/Users/mohamed/Desktop/Projects/fanrush/public/backgrounds/fanrush-stadium-wave.png"
+    )).toBe(true)
   })
 
   test("AdminShell component exists and uses AdminSidebar and MobileAdminNav", async () => {

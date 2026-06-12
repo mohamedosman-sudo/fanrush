@@ -5,93 +5,112 @@
   --foreground: #f9fafb;
 }
 
-/* ── FanRush Global Background ───────────────────────────────────────────────
- * One fixed layer. Route-aware via data-mode attribute.
- * z-index: 0. Page content sits in relative z-10 wrapper in layout.tsx.
- * ─────────────────────────────────────────────────────────────────────────── */
-
+/* One fixed stadium image behind every route. */
 html {
-  background-color: #07080f;
+  background-color: #050712;
 }
 
-.fanrush-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  transition: background 0.4s ease;
+.stadium-bg {
+  --stadium-image-opacity: 0.75;
+  --stadium-line-opacity: 0.55;
+  --stadium-overlay-opacity: 0.52;
+  background: #050712;
+  contain: strict;
 }
 
-/* PUBLIC — visible but premium */
-.fanrush-bg[data-mode="public"] {
-  background:
-    radial-gradient(circle at 72% 8%,  rgba(249,115,22,0.14) 0%, transparent 28rem),
-    radial-gradient(circle at 20% 90%, rgba(59,130,246,0.08) 0%, transparent 24rem),
-    linear-gradient(180deg, #0a0b14 0%, #060710 100%);
+.stadium-bg[data-mode="public"] {
+  --stadium-image-opacity: 0.75;
+  --stadium-line-opacity: 0.55;
+  --stadium-overlay-opacity: 0.52;
 }
 
-/* FAN — subtle */
-.fanrush-bg[data-mode="fan"] {
-  background:
-    radial-gradient(circle at 70% 10%,  rgba(249,115,22,0.09) 0%, transparent 26rem),
-    radial-gradient(circle at 18% 88%,  rgba(59,130,246,0.07) 0%, transparent 22rem),
-    linear-gradient(180deg, #09090f 0%, #060710 100%);
+.stadium-bg[data-mode="fan"] {
+  --stadium-image-opacity: 0.62;
+  --stadium-line-opacity: 0.45;
+  --stadium-overlay-opacity: 0.6;
 }
 
-/* BUSINESS — very subtle, serious dashboard */
-.fanrush-bg[data-mode="business"] {
-  background:
-    radial-gradient(circle at 80% 5%,  rgba(249,115,22,0.035) 0%, transparent 24rem),
-    radial-gradient(circle at 10% 95%, rgba(59,130,246,0.045) 0%, transparent 20rem),
-    linear-gradient(180deg, #08090e 0%, #050609 100%);
+.stadium-bg[data-mode="business"] {
+  --stadium-image-opacity: 0.22;
+  --stadium-line-opacity: 0.16;
+  --stadium-overlay-opacity: 0.68;
 }
 
-/* ADMIN — barely visible, console feel */
-.fanrush-bg[data-mode="admin"] {
-  background:
-    radial-gradient(circle at 85% 4%,  rgba(249,115,22,0.02)  0%, transparent 20rem),
-    radial-gradient(circle at 8%  96%, rgba(59,130,246,0.035) 0%, transparent 18rem),
-    linear-gradient(180deg, #070810 0%, #040508 100%);
+.stadium-bg[data-mode="admin"] {
+  --stadium-image-opacity: 0.14;
+  --stadium-line-opacity: 0.08;
+  --stadium-overlay-opacity: 0.78;
 }
 
-/* Crowd glow — only on public and fan */
-.fanrush-bg[data-mode="public"] .fanrush-bg-crowd,
-.fanrush-bg[data-mode="fan"] .fanrush-bg-crowd {
+.stadium-bg__image,
+.stadium-bg__overlay,
+.stadium-bg__waves {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 35%;
-  background:
-    radial-gradient(ellipse 120% 60% at 30% 100%, rgba(249,115,22,0.07) 0%, transparent 70%),
-    radial-gradient(ellipse 120% 60% at 70% 100%, rgba(251,191,36,0.05) 0%, transparent 70%);
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-/* No crowd glow on business/admin */
-.fanrush-bg[data-mode="business"] .fanrush-bg-crowd,
-.fanrush-bg[data-mode="admin"] .fanrush-bg-crowd {
-  display: none;
+.stadium-bg__image {
+  background-image: url("/backgrounds/fanrush-stadium-clean.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: var(--stadium-image-opacity);
 }
 
-/* Mobile — reduce all glows */
+.stadium-bg__overlay {
+  background: rgb(2 4 12 / var(--stadium-overlay-opacity));
+}
+
+.stadium-bg__waves {
+  min-width: 112%;
+  left: -6%;
+  overflow: visible;
+  opacity: var(--stadium-line-opacity);
+}
+
+.stadium-bg__waves path {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.stadium-bg__wave-group {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.stadium-bg__wave-group--orange {
+  animation: stadium-wave-drift 28s ease-in-out infinite alternate;
+}
+
+.stadium-bg__wave-group--blue {
+  animation: stadium-wave-drift-reverse 34s ease-in-out infinite alternate;
+}
+
+@keyframes stadium-wave-drift {
+  from { transform: translate3d(-5.5%, 0, 0); }
+  to { transform: translate3d(5.5%, 0, 0); }
+}
+
+@keyframes stadium-wave-drift-reverse {
+  from { transform: translate3d(5%, 0, 0); }
+  to { transform: translate3d(-5%, 0, 0); }
+}
+
 @media (max-width: 767px) {
-  .fanrush-bg[data-mode="public"] {
-    background:
-      radial-gradient(circle at 72% 8%,  rgba(249,115,22,0.10) 0%, transparent 18rem),
-      radial-gradient(circle at 20% 90%, rgba(59,130,246,0.06) 0%, transparent 14rem),
-      linear-gradient(180deg, #0a0b14 0%, #060710 100%);
-  }
-  .fanrush-bg[data-mode="fan"] {
-    background:
-      radial-gradient(circle at 70% 10%, rgba(249,115,22,0.07) 0%, transparent 16rem),
-      radial-gradient(circle at 18% 88%, rgba(59,130,246,0.05) 0%, transparent 12rem),
-      linear-gradient(180deg, #09090f 0%, #060710 100%);
+  .stadium-bg__waves {
+    min-width: 145%;
+    left: -22%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fanrush-bg { transition: none; }
+  .stadium-bg__wave-group {
+    animation: none;
+    will-change: auto;
+  }
 }
 
 @theme inline {
@@ -102,7 +121,7 @@ html {
 }
 
 body {
-  /* Transparent — dark base is on <html>; wave background is the fixed layer */
+  /* Transparent: the fixed stadium asset is the global page background. */
   background: transparent;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
